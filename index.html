@@ -23,38 +23,38 @@
         #map {
             width: 100%;
             height: 100%;
-            background-color: #1a202c; /* Dark background while map loads */
+            background-color: #020617; /* bg-slate-950 */
         }
         .ol-popup {
             position: absolute;
-            background-color: rgba(30, 41, 59, 0.9); /* bg-slate-800 with transparency */
+            background-color: rgba(15, 23, 42, 0.9); /* bg-slate-900 with transparency */
             backdrop-filter: blur(8px);
             color: white;
             box-shadow: 0 4px 30px rgba(0,0,0,0.5);
             padding: 15px;
             border-radius: 12px;
-            border: 1px solid #334155; /* border-slate-700 */
+            border: 1px solid #1e293b; /* border-slate-800 */
             bottom: 12px;
             left: -50px;
             min-width: 280px;
-            max-width: 320px; /* Adjusted max-width */
+            max-width: 320px;
             transform: translateX(-50%);
             transition: all 0.3s ease;
-            pointer-events: none; /* Make hover popup non-interactive */
+            pointer-events: none;
         }
         .ol-popup:after, .ol-popup:before {
             top: 100%; border: solid transparent; content: " "; height: 0; width: 0; position: absolute; pointer-events: none; left: 50%;
         }
-        .ol-popup:after { border-top-color: rgba(30, 41, 59, 0.9); border-width: 10px; margin-left: -10px; }
-        .ol-popup:before { border-top-color: #334155; border-width: 11px; margin-left: -11px; }
+        .ol-popup:after { border-top-color: rgba(15, 23, 42, 0.9); border-width: 10px; margin-left: -10px; }
+        .ol-popup:before { border-top-color: #1e293b; border-width: 11px; margin-left: -11px; }
         
-        #popup-content img, #media-viewer-content img { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid #334155; }
+        #popup-content img, #media-viewer-content img { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid #1e293b; }
         #popup-content iframe, #media-viewer-content iframe {
             width: 100%;
             aspect-ratio: 16 / 9;
             border-radius: 8px;
             margin-top: 10px;
-            border: 1px solid #334155;
+            border: 1px solid #1e293b;
         }
         
         @keyframes fadeIn {
@@ -64,31 +64,34 @@
         .modal-fade-in { animation: fadeIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
         .map-cursor-add { cursor: crosshair; }
         @keyframes pulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
         }
         .pulse-animation { animation: pulse 2s infinite; }
     </style>
 </head>
-<body class="bg-slate-900">
+<body class="bg-slate-950">
 
     <!-- Authentication Screen -->
-    <div id="auth-container" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
-        <div class="w-full max-w-sm p-8 bg-slate-800 rounded-2xl shadow-2xl border border-slate-700">
-            <!-- Unified Auth Form -->
+    <div id="auth-container" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
+        <div class="w-full max-w-sm p-8 bg-black/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-800">
             <div>
-                <h2 class="text-3xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500 mb-2">Eric Projects</h2>
+                <h2 class="text-3xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-500 mb-2">Eric Projects</h2>
                 <p class="text-center text-slate-400 mb-6">Enter your credentials to continue.</p>
                 <form id="auth-form">
                     <div class="mb-4">
                         <label for="auth-username" class="block text-sm font-medium text-slate-300">Username</label>
-                        <input type="text" id="auth-username" required class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white transition">
+                        <input type="text" id="auth-username" required class="mt-1 block w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-white transition">
+                    </div>
+                    <div class="mb-4">
+                        <label for="auth-password" class="block text-sm font-medium text-slate-300">Password</label>
+                        <input type="password" id="auth-password" required class="mt-1 block w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-white transition">
                     </div>
                     <div class="mb-6">
-                        <label for="auth-password" class="block text-sm font-medium text-slate-300">Password</label>
-                        <input type="password" id="auth-password" required class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white transition">
+                        <label for="auth-wallet" class="block text-sm font-medium text-slate-300">Solana Wallet Address</label>
+                        <input type="text" id="auth-wallet" required placeholder="Enter your public Solana wallet address" class="mt-1 block w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-white transition">
                     </div>
-                    <button type="submit" id="auth-button" class="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-md hover:from-indigo-600 hover:to-purple-700 transition transform hover:scale-105 shadow-lg">Continue</button>
+                    <button type="submit" id="auth-button" class="w-full py-2.5 px-4 bg-gradient-to-r from-green-500 to-teal-600 text-white font-semibold rounded-md hover:from-green-600 hover:to-teal-700 transition transform hover:scale-105 shadow-lg">Continue</button>
                     <p id="auth-error" class="text-red-400 text-sm mt-3 text-center h-4"></p>
                 </form>
                 <p class="text-center text-xs text-slate-500 mt-8">by ERIC Team</p>
@@ -101,24 +104,39 @@
         <div id="map"></div>
 
         <!-- Header over the map -->
-        <header class="absolute top-0 left-0 right-0 p-4 z-20 flex justify-between items-center gap-4 bg-gradient-to-b from-black/60 to-transparent">
-            <h1 class="hidden sm:block text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">Eric Projects</h1>
-            <div class="flex-1 flex items-center justify-center sm:justify-start gap-2 md:gap-4">
-                <a href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="line-chart"></i><span class="hidden md:inline">Pumpfun</span></a>
-                <a href="https://youtube.com/@ericemprende-finanzas?si=hL_aJy3R916mPFZD" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="youtube"></i><span class="hidden md:inline">YouTube</span></a>
-                <a href="https://x.com/ericemprende" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="twitter"></i><span class="hidden md:inline">X</span></a>
+        <header class="absolute top-0 left-0 right-0 p-4 z-20 flex flex-col gap-4 bg-gradient-to-b from-black/80 to-transparent">
+            <div class="flex justify-between items-center w-full">
+                 <h1 class="hidden sm:block text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-500">Eric Projects</h1>
+                 <div class="flex-1 flex items-center justify-center sm:justify-start gap-2 md:gap-4 sm:ml-6">
+                    <a href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="line-chart"></i><span class="hidden md:inline">Pumpfun</span></a>
+                    <a href="https://youtube.com/@ericemprende-finanzas?si=hL_aJy3R916mPFZD" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="youtube"></i><span class="hidden md:inline">YouTube</span></a>
+                    <a href="https://x.com/ericemprende" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="twitter"></i><span class="hidden md:inline">X</span></a>
+                </div>
+                 <div id="user-info" class="flex items-center gap-4">
+                     <div class="text-right">
+                        <p class="font-semibold text-white text-lg" id="username-display"></p>
+                        <p class="font-mono text-xs text-green-400" id="user-balance-display">0 SOL</p>
+                    </div>
+                    <button id="logout-btn" class="text-slate-400 hover:text-white"><i data-lucide="log-out"></i></button>
+                </div>
             </div>
-            <div id="user-info" class="flex items-center gap-4">
-                 <button id="challenges-btn" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="trophy"></i> <span class="hidden md:inline">Challenges</span></button>
-                <button id="my-graffiti-btn" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="history"></i> <span class="hidden md:inline">My Graffiti</span></button>
-                <div class="text-right">
-                    <p class="font-semibold text-white" id="username-display"></p>
-                    <button id="logout-btn" class="text-xs text-indigo-400 hover:underline">Log Out</button>
+            <div class="w-full max-w-2xl mx-auto">
+                 <div class="flex justify-between items-center text-xs text-white mb-1">
+                    <span class="font-bold">Prize Pool</span>
+                    <span id="prize-pool-total">0 / 1 SOL</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-2.5">
+                    <div id="prize-pool-bar" class="bg-gradient-to-r from-green-500 to-teal-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
                 </div>
             </div>
         </header>
 
-        <button id="create-graffiti-btn" class="absolute bottom-5 right-5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full p-4 shadow-lg hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-indigo-500 z-10 pulse-animation">
+         <div class="absolute bottom-5 left-5 z-10 flex flex-col gap-3">
+             <button id="challenges-btn" class="bg-black/50 backdrop-blur-sm text-white rounded-full p-4 shadow-lg hover:bg-black/70 border border-slate-700 transition"><i data-lucide="trophy"></i></button>
+            <button id="my-graffiti-btn" class="bg-black/50 backdrop-blur-sm text-white rounded-full p-4 shadow-lg hover:bg-black/70 border border-slate-700 transition"><i data-lucide="history"></i></button>
+         </div>
+
+        <button id="create-graffiti-btn" class="absolute bottom-5 right-5 bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-full p-4 shadow-lg hover:from-green-600 hover:to-teal-700 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-slate-950 focus:ring-green-500 z-10 pulse-animation">
             <i data-lucide="pen-square"></i>
         </button>
     </div>
@@ -128,36 +146,36 @@
     
     <!-- Add Graffiti Modal -->
     <div id="graffiti-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md modal-fade-in border border-slate-700">
+        <div class="bg-slate-900 rounded-lg shadow-xl p-6 w-full max-w-md modal-fade-in border border-slate-800">
             <h2 class="text-2xl font-bold mb-4 text-white">Add Graffiti</h2>
             <form id="graffiti-form">
                 <input type="hidden" id="latitude" name="latitude"><input type="hidden" id="longitude" name="longitude">
                 <div class="mb-4">
                     <label for="address" class="block text-sm font-medium text-slate-300">Or search for an address</label>
-                    <div class="flex"><input type="text" id="address" class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-white sm:text-sm"><button type="button" id="search-address" class="ml-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Search</button></div>
+                    <div class="flex"><input type="text" id="address" class="mt-1 block w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 text-white sm:text-sm"><button type="button" id="search-address" class="ml-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Search</button></div>
                 </div>
-                <div class="mb-4"><label for="description" class="block text-sm font-medium text-slate-300">Description</label><textarea id="description" rows="3" class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-white sm:text-sm" required></textarea></div>
-                <div class="mb-4"><label for="color" class="block text-sm font-medium text-slate-300">Marker Color</label><input type="color" id="color" value="#8b5cf6" class="mt-1 block w-full h-10 border-slate-600 rounded-md bg-slate-700"></div>
+                <div class="mb-4"><label for="description" class="block text-sm font-medium text-slate-300">Description</label><textarea id="description" rows="3" class="mt-1 block w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 text-white sm:text-sm" required></textarea></div>
+                <div class="mb-4"><label for="color" class="block text-sm font-medium text-slate-300">Marker Color</label><input type="color" id="color" value="#4ade80" class="mt-1 block w-full h-10 border-slate-700 rounded-md bg-slate-800"></div>
                 
                 <div class="mb-4 space-y-4">
                     <div>
                         <label for="image-url" class="block text-sm font-medium text-slate-300">Image URL</label>
-                        <input type="url" id="image-url" placeholder="https://example.com/image.jpg" class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white">
+                        <input type="url" id="image-url" placeholder="https://example.com/image.jpg" class="mt-1 block w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-white">
                     </div>
                      <div>
                         <label for="video-url" class="block text-sm font-medium text-slate-300">YouTube Video URL</label>
-                        <input type="url" id="video-url" placeholder="https://www.youtube.com/watch?v=..." class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white">
+                        <input type="url" id="video-url" placeholder="https://www.youtube.com/watch?v=..." class="mt-1 block w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-white">
                     </div>
                 </div>
 
-                <div class="flex justify-end space-x-2"><button type="button" id="cancel-graffiti" class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-500 transition">Cancel</button><button type="submit" id="submit-graffiti" class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-md hover:from-indigo-600 hover:to-purple-700 transition">Save</button></div>
+                <div class="flex justify-end space-x-2"><button type="button" id="cancel-graffiti" class="px-4 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-600 transition">Cancel</button><button type="submit" id="submit-graffiti" class="px-4 py-2 bg-gradient-to-r from-green-500 to-teal-600 text-white font-semibold rounded-md hover:from-green-600 hover:to-teal-700 transition">Save</button></div>
             </form>
         </div>
     </div>
     
     <!-- "My Graffiti" Modal -->
     <div id="my-graffiti-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-lg modal-fade-in border border-slate-700 flex flex-col" style="height: 70vh;">
+        <div class="bg-slate-900 rounded-lg shadow-xl p-6 w-full max-w-lg modal-fade-in border border-slate-800 flex flex-col" style="height: 70vh;">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold text-white flex items-center gap-2"><i data-lucide="history"></i> My History</h2>
                 <button id="close-my-graffiti-modal" class="text-slate-400 hover:text-white transition"><i data-lucide="x"></i></button>
@@ -168,23 +186,20 @@
 
     <!-- Challenges Modal -->
     <div id="challenges-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-lg modal-fade-in border border-slate-700 flex flex-col" style="height: 70vh;">
+        <div class="bg-slate-900 rounded-lg shadow-xl p-6 w-full max-w-lg modal-fade-in border border-slate-800 flex flex-col" style="height: 70vh;">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold text-white flex items-center gap-2"><i data-lucide="trophy"></i> Active Challenges</h2>
                 <button id="close-challenges-modal" class="text-slate-400 hover:text-white transition"><i data-lucide="x"></i></button>
             </div>
             <div id="challenges-list" class="flex-grow overflow-y-auto pr-2 space-y-3">
-                 <div class="p-4 bg-slate-700 rounded-lg"><h3 class="font-bold text-indigo-400">First Mark</h3><p class="text-sm text-slate-300 mt-1">Place your first graffiti anywhere on the map.</p></div>
-                 <div class="p-4 bg-slate-700 rounded-lg"><h3 class="font-bold text-indigo-400">Urban Explorer</h3><p class="text-sm text-slate-300 mt-1">Place graffiti in 3 different cities.</p></div>
-                 <div class="p-4 bg-slate-700 rounded-lg"><h3 class="font-bold text-indigo-400">Video Artist</h3><p class="text-sm text-slate-300 mt-1">Add a graffiti that includes a YouTube video.</p></div>
-                 <div class="p-4 bg-slate-700 rounded-lg"><h3 class="font-bold text-indigo-400">Around the World</h3><p class="text-sm text-slate-300 mt-1">Place graffiti on 3 different continents.</p></div>
+                 <!-- Challenges will be loaded from Firebase here -->
             </div>
         </div>
     </div>
 
     <!-- Media Viewer Modal (for click) -->
     <div id="media-viewer-modal" class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center p-4 z-[60] hidden">
-        <div class="bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl modal-fade-in border border-slate-700 flex flex-col relative">
+        <div class="bg-slate-900 rounded-lg shadow-xl w-full max-w-2xl modal-fade-in border border-slate-800 flex flex-col relative">
              <button id="close-media-viewer" class="absolute -top-3 -right-3 text-slate-400 bg-slate-800 rounded-full p-1.5 border border-slate-700 hover:text-white transition z-10"><i data-lucide="x"></i></button>
              <div id="media-viewer-content" class="w-full"></div>
              <div class="p-6">
@@ -202,7 +217,7 @@
     <script type="module">
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, where, setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         const firebaseConfig = {
@@ -221,15 +236,32 @@
         let userId;
         let map; 
         let isPlacingGraffiti = false;
+        let userListener = null; // To unsubscribe from snapshot listener on logout
+        let prizePoolListener = null;
+        let challengesListener = null;
         
         const authContainer = document.getElementById('auth-container');
         const mapAppContainer = document.getElementById('map-app-container');
 
+        // --- AUTH STATE & DATA LISTENERS ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                userId = user.uid;
-                const userDocRef = doc(db, "users", userId);
+                // Unsubscribe from previous listeners if they exist
+                if(userListener) userListener();
+                if(prizePoolListener) prizePoolListener();
+                if(challengesListener) challengesListener();
+
+                const userDocRef = doc(db, "users", user.uid);
                 const userDoc = await getDoc(userDocRef);
+
+                // --- BAN CHECK ---
+                if (userDoc.exists() && userDoc.data().banned === true) {
+                    alert("Your account has been suspended.");
+                    signOut(auth);
+                    return;
+                }
+
+                userId = user.uid;
                 const username = userDoc.exists() ? userDoc.data().username : user.email.split('@')[0];
                 document.getElementById('username-display').textContent = username;
 
@@ -239,11 +271,18 @@
                 if (!map) {
                     setupMap();
                 }
+                listenToUserData(user.uid);
                 listenToMyGraffiti();
+                listenToPrizePool();
+                listenToChallenges();
                 lucide.createIcons();
             } else {
                 authContainer.classList.remove('hidden');
                 mapAppContainer.classList.add('hidden');
+                // Unsubscribe from listeners on logout
+                if(userListener) userListener();
+                if(prizePoolListener) prizePoolListener();
+                if(challengesListener) challengesListener();
             }
         });
 
@@ -251,8 +290,15 @@
             e.preventDefault();
             const username = document.getElementById('auth-username').value;
             const password = document.getElementById('auth-password').value;
+            const walletAddress = document.getElementById('auth-wallet').value;
             const errorP = document.getElementById('auth-error');
             const authButton = document.getElementById('auth-button');
+
+            if (!walletAddress || walletAddress.length < 32 || walletAddress.length > 44) {
+                errorP.textContent = 'Please enter a valid Solana wallet address.';
+                return;
+            }
+
             errorP.textContent = '';
             authButton.disabled = true;
             authButton.textContent = 'Processing...';
@@ -260,21 +306,22 @@
             const email = `${username.trim().toLowerCase()}@graffiti-map.com`;
 
             try {
-                // First, try to sign in
                 await signInWithEmailAndPassword(auth, email, password);
             } catch (loginError) {
-                // If user not found, try to register them
                 if (loginError.code === 'auth/invalid-credential' || loginError.code === 'auth/user-not-found') {
                     try {
                         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                        await setDoc(doc(db, "users", userCredential.user.uid), { username: username });
+                        await setDoc(doc(db, "users", userCredential.user.uid), { 
+                            username: username,
+                            walletAddress: walletAddress,
+                            balance: 0,
+                            banned: false 
+                        });
                     } catch (registerError) {
                         errorP.textContent = registerError.code === 'auth/weak-password' ? 'Password must be at least 6 characters.' : 'Could not create account.';
                     }
-                } else if (loginError.code === 'auth/wrong-password') {
-                    errorP.textContent = 'Incorrect password.';
                 } else {
-                    errorP.textContent = 'An error occurred. Please try again.';
+                    errorP.textContent = 'Incorrect username or password.';
                 }
             } finally {
                 authButton.disabled = false;
@@ -283,12 +330,65 @@
         });
 
         document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+        
+        // Listen to real-time updates for the logged-in user's balance
+        function listenToUserData(uid) {
+            const userDocRef = doc(db, "users", uid);
+            userListener = onSnapshot(userDocRef, (doc) => {
+                if (doc.exists()) {
+                    const userData = doc.data();
+                    document.getElementById('user-balance-display').textContent = `${(userData.balance || 0).toFixed(4)} SOL`;
+                }
+            });
+        }
+        
+        // Listen to changes in ALL user balances to update the prize pool
+        function listenToPrizePool() {
+            const usersRef = collection(db, "users");
+            prizePoolListener = onSnapshot(query(usersRef), (snapshot) => {
+                let totalBalance = 0;
+                snapshot.forEach(doc => {
+                    totalBalance += doc.data().balance || 0;
+                });
+                const prizePoolGoal = 1; // 1 SOL
+                const percentage = Math.min((totalBalance / prizePoolGoal) * 100, 100);
+                document.getElementById('prize-pool-bar').style.width = `${percentage}%`;
+                document.getElementById('prize-pool-total').textContent = `${totalBalance.toFixed(4)} / ${prizePoolGoal} SOL`;
+            });
+        }
+        
+        // Listen to challenges from Firebase
+        function listenToChallenges() {
+            const challengesRef = collection(db, "challenges");
+            const challengesList = document.getElementById('challenges-list');
+            challengesListener = onSnapshot(query(challengesRef), (snapshot) => {
+                challengesList.innerHTML = '';
+                 if (snapshot.empty) {
+                    challengesList.innerHTML = `<p class="text-slate-400 text-center mt-4">No active challenges right now. Check back soon!</p>`;
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    const challenge = doc.data();
+                    const div = document.createElement('div');
+                    div.className = 'p-4 bg-slate-800 rounded-lg';
+                    div.innerHTML = `
+                        <h3 class="font-bold text-green-400">${challenge.title}</h3>
+                        <p class="text-sm text-slate-300 mt-1">${challenge.description}</p>
+                        ${challenge.reward ? `<p class="text-xs text-green-400 mt-2 font-bold">${challenge.reward} SOL Reward</p>` : ''}
+                    `;
+                    challengesList.appendChild(div);
+                });
+            });
+        }
 
+
+        // --- MAP LOGIC ---
         const popupContainer = document.getElementById('popup');
         const popupContent = document.getElementById('popup-content');
         const overlay = new ol.Overlay({ element: popupContainer, autoPan: false });
         
         function getYouTubeVideoId(url) {
+            if (!url) return null;
             let ID = '';
             url = url.replace(/(>|<)/gi, '').split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/)/);
             if (url[2] !== undefined) {
@@ -306,7 +406,7 @@
                 style: (feature) => new ol.style.Style({
                     image: new ol.style.Circle({
                         radius: 8,
-                        fill: new ol.style.Fill({ color: feature.get('color') || '#8b5cf6' }),
+                        fill: new ol.style.Fill({ color: feature.get('color') || '#4ade80' }),
                         stroke: new ol.style.Stroke({ color: 'rgba(255,255,255,0.8)', width: 2.5 })
                     })
                 })
@@ -408,14 +508,14 @@
                 const feature = map.forEachFeatureAtPixel(evt.pixel, (f) => f);
 
                 if (feature) {
-                    overlay.setPosition(undefined); // Hide hover popup
+                    overlay.setPosition(undefined); 
                     hoveredFeature = null;
                     
                     const { description, authorUsername, videoUrl, imageUrl } = feature.getProperties();
 
                     document.getElementById('media-viewer-title').textContent = description;
                     document.getElementById('media-viewer-author').textContent = authorUsername ? `By: ${authorUsername}` : '';
-                    document.getElementById('media-viewer-description').textContent = description; // You can expand on this if you add more fields
+                    document.getElementById('media-viewer-description').textContent = description; 
                     
                     const mediaContentEl = document.getElementById('media-viewer-content');
                     const youtubeLinkEl = document.getElementById('media-viewer-youtube-link');
@@ -439,6 +539,7 @@
             });
         }
         
+        // --- MODAL & FORM LOGIC ---
         const graffitiModal = document.getElementById('graffiti-modal');
         const graffitiForm = document.getElementById('graffiti-form');
         const myGraffitiModal = document.getElementById('my-graffiti-modal');
@@ -504,10 +605,10 @@
                 snapshot.docs.sort((a,b) => b.data().createdAt.toMillis() - a.data().createdAt.toMillis()).forEach(docSnap => {
                     const graffiti = docSnap.data();
                     const div = document.createElement('div');
-                    div.className = 'p-3 bg-slate-700 rounded-lg mb-2 flex justify-between items-center transition hover:bg-slate-600';
+                    div.className = 'p-3 bg-slate-800 rounded-lg mb-2 flex justify-between items-center transition hover:bg-slate-700';
                     div.innerHTML = `
                         <p class="text-white truncate pr-4">${graffiti.description}</p>
-                        <button class="text-sm bg-indigo-600 px-3 py-1 rounded-md hover:bg-indigo-500 transition flex-shrink-0">View</button>
+                        <button class="text-sm bg-green-600 px-3 py-1 rounded-md hover:bg-green-500 transition flex-shrink-0">View</button>
                     `;
                     div.querySelector('button').addEventListener('click', () => {
                         myGraffitiModal.classList.add('hidden');

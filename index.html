@@ -117,6 +117,7 @@
                         <p class="font-semibold text-white text-lg" id="username-display"></p>
                         <p class="font-mono text-xs text-green-400" id="user-balance-display">0 SOL</p>
                     </div>
+                    <button id="profile-btn" class="text-slate-400 hover:text-white"><i data-lucide="user-circle"></i></button>
                     <button id="logout-btn" class="text-slate-400 hover:text-white"><i data-lucide="log-out"></i></button>
                 </div>
             </div>
@@ -193,6 +194,30 @@
             </div>
             <div id="challenges-list" class="flex-grow overflow-y-auto pr-2 space-y-3">
                  <!-- Challenges will be loaded from Firebase here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profile-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-900 rounded-lg shadow-xl p-6 w-full max-w-md modal-fade-in border border-slate-800">
+             <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2"><i data-lucide="user-circle"></i> My Profile</h2>
+                <button id="close-profile-modal" class="text-slate-400 hover:text-white transition"><i data-lucide="x"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-slate-400">Username</label>
+                    <p id="profile-username" class="text-lg font-semibold text-white"></p>
+                </div>
+                 <div>
+                    <label class="text-sm font-medium text-slate-400">Balance</label>
+                    <p id="profile-balance" class="text-lg font-semibold text-green-400"></p>
+                </div>
+                 <div>
+                    <label class="text-sm font-medium text-slate-400">Wallet Address</label>
+                    <p id="profile-wallet" class="text-sm font-mono text-slate-300 break-all"></p>
+                </div>
             </div>
         </div>
     </div>
@@ -315,7 +340,8 @@
                             username: username,
                             walletAddress: walletAddress,
                             balance: 0,
-                            banned: false 
+                            banned: false,
+                            isAdmin: false // Default to not admin
                         });
                     } catch (registerError) {
                         errorP.textContent = registerError.code === 'auth/weak-password' ? 'Password must be at least 6 characters.' : 'Could not create account.';
@@ -331,13 +357,19 @@
 
         document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
         
-        // Listen to real-time updates for the logged-in user's balance
+        // Listen to real-time updates for the logged-in user's data
         function listenToUserData(uid) {
             const userDocRef = doc(db, "users", uid);
             userListener = onSnapshot(userDocRef, (doc) => {
                 if (doc.exists()) {
                     const userData = doc.data();
-                    document.getElementById('user-balance-display').textContent = `${(userData.balance || 0).toFixed(4)} SOL`;
+                    const balance = userData.balance || 0;
+                    // Update header
+                    document.getElementById('user-balance-display').textContent = `${balance.toFixed(4)} SOL`;
+                    // Update profile modal
+                    document.getElementById('profile-username').textContent = userData.username;
+                    document.getElementById('profile-wallet').textContent = userData.walletAddress;
+                    document.getElementById('profile-balance').textContent = `${balance.toFixed(4)} SOL`;
                 }
             });
         }
@@ -369,12 +401,22 @@
                 }
                 snapshot.forEach(doc => {
                     const challenge = doc.data();
+                    let winnersHTML = '';
+                    if (challenge.winners && Object.keys(challenge.winners).length > 0) {
+                        winnersHTML += '<h4 class="text-sm font-bold text-slate-400 mt-3">Winners:</h4><ul class="list-disc list-inside text-sm text-slate-300">';
+                        for(const userId in challenge.winners) {
+                            winnersHTML += `<li>${challenge.winners[userId]}</li>`;
+                        }
+                        winnersHTML += '</ul>';
+                    }
+
                     const div = document.createElement('div');
                     div.className = 'p-4 bg-slate-800 rounded-lg';
                     div.innerHTML = `
                         <h3 class="font-bold text-green-400">${challenge.title}</h3>
                         <p class="text-sm text-slate-300 mt-1">${challenge.description}</p>
                         ${challenge.reward ? `<p class="text-xs text-green-400 mt-2 font-bold">${challenge.reward} SOL Reward</p>` : ''}
+                        ${winnersHTML}
                     `;
                     challengesList.appendChild(div);
                 });
@@ -545,12 +587,15 @@
         const myGraffitiModal = document.getElementById('my-graffiti-modal');
         const challengesModal = document.getElementById('challenges-modal');
         const mediaViewerModal = document.getElementById('media-viewer-modal');
+        const profileModal = document.getElementById('profile-modal');
 
         document.getElementById('cancel-graffiti').addEventListener('click', () => { graffitiModal.classList.add('hidden'); graffitiForm.reset(); });
         document.getElementById('my-graffiti-btn').addEventListener('click', () => myGraffitiModal.classList.remove('hidden'));
         document.getElementById('close-my-graffiti-modal').addEventListener('click', () => myGraffitiModal.classList.add('hidden'));
         document.getElementById('challenges-btn').addEventListener('click', () => challengesModal.classList.remove('hidden'));
         document.getElementById('close-challenges-modal').addEventListener('click', () => challengesModal.classList.add('hidden'));
+        document.getElementById('profile-btn').addEventListener('click', () => profileModal.classList.remove('hidden'));
+        document.getElementById('close-profile-modal').addEventListener('click', () => profileModal.classList.add('hidden'));
         document.getElementById('close-media-viewer').addEventListener('click', () => {
              mediaViewerModal.classList.add('hidden');
              document.getElementById('media-viewer-content').innerHTML = ''; // Stop video

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eric Proyectos - Mapa de Grafitis</title>
+    <!-- OpenLayers -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v9.2.4/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@v9.2.4/dist/ol.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+            background-color: #1a202c; /* Fondo oscuro mientras carga el mapa */
+        }
+        /* No se necesita filtro de canvas con un mapa base oscuro */
+        .ol-popup {
+            position: absolute;
+            background-color: rgba(30, 41, 59, 0.9); /* bg-slate-800 con transparencia */
+            backdrop-filter: blur(8px);
+            color: white;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #334155; /* border-slate-700 */
+            bottom: 12px;
+            left: -50px;
+            min-width: 280px;
+            max-width: 350px;
+            transform: translateX(-50%);
+            transition: all 0.3s ease;
+        }
+        .ol-popup:after, .ol-popup:before {
+            top: 100%; border: solid transparent; content: " "; height: 0; width: 0; position: absolute; pointer-events: none; left: 50%;
+        }
+        .ol-popup:after { border-top-color: rgba(30, 41, 59, 0.9); border-width: 10px; margin-left: -10px; }
+        .ol-popup:before { border-top-color: #334155; border-width: 11px; margin-left: -11px; }
+        .ol-popup-closer { text-decoration: none; position: absolute; top: 8px; right: 8px; color: #94a3b8; transition: color 0.2s; }
+        .ol-popup-closer:hover { color: #fff; }
+        #popup-content video, #popup-content img { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid #334155; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-fade-in { animation: fadeIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+        .map-cursor-add { cursor: crosshair; }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+        }
+        .pulse-animation { animation: pulse 2s infinite; }
+    </style>
+</head>
+<body class="bg-slate-900">
+
+    <!-- Pantalla de Autenticación -->
+    <div id="auth-container" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
+        <div class="w-full max-w-sm p-8 bg-slate-800 rounded-2xl shadow-2xl border border-slate-700">
+            <!-- Formulario de Inicio de Sesión -->
+            <div id="login-form-container">
+                <h2 class="text-3xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500 mb-2">Eric Proyectos</h2>
+                <p class="text-center text-slate-400 mb-6">Inicia sesión para dejar tu marca en el mundo.</p>
+                <form id="login-form">
+                    <div class="mb-4">
+                        <label for="login-username" class="block text-sm font-medium text-slate-300">Nombre de Usuario</label>
+                        <input type="text" id="login-username" required class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white transition">
+                    </div>
+                    <div class="mb-6">
+                        <label for="login-password" class="block text-sm font-medium text-slate-300">Contraseña</label>
+                        <input type="password" id="login-password" required class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white transition">
+                    </div>
+                    <button type="submit" class="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-md hover:from-indigo-600 hover:to-purple-700 transition transform hover:scale-105 shadow-lg">Entrar</button>
+                    <p id="login-error" class="text-red-400 text-sm mt-3 text-center h-4"></p>
+                </form>
+                <p class="mt-4 text-center text-sm text-slate-400">¿No tienes cuenta? <a href="#" id="show-register" class="font-medium text-indigo-400 hover:text-indigo-300">Regístrate</a></p>
+                <p class="text-center text-xs text-slate-500 mt-8">de ERIC Team</p>
+            </div>
+            <!-- Formulario de Registro -->
+            <div id="register-form-container" class="hidden">
+                <h2 class="text-3xl font-bold text-center text-white mb-6">Crear Cuenta</h2>
+                <form id="register-form">
+                    <div class="mb-4">
+                        <label for="register-username" class="block text-sm font-medium text-slate-300">Nombre de Usuario</label>
+                        <input type="text" id="register-username" required class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white transition">
+                    </div>
+                    <div class="mb-6">
+                        <label for="register-password" class="block text-sm font-medium text-slate-300">Contraseña</label>
+                        <input type="password" id="register-password" required class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white transition">
+                    </div>
+                    <button type="submit" class="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-md hover:from-indigo-600 hover:to-purple-700 transition transform hover:scale-105 shadow-lg">Registrar</button>
+                    <p id="register-error" class="text-red-400 text-sm mt-3 text-center h-4"></p>
+                </form>
+                <p class="mt-4 text-center text-sm text-slate-400">¿Ya tienes cuenta? <a href="#" id="show-login" class="font-medium text-indigo-400 hover:text-indigo-300">Inicia Sesión</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor del Mapa (Pantalla completa) -->
+    <div id="map-app-container" class="h-screen w-screen hidden relative">
+        <div id="map"></div>
+
+        <!-- Cabecera sobre el mapa -->
+        <header class="absolute top-0 left-0 right-0 p-4 z-20 flex justify-between items-center gap-4 bg-gradient-to-b from-black/60 to-transparent">
+            <h1 class="hidden sm:block text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">Eric Proyectos</h1>
+            <div class="flex-1 flex items-center justify-center sm:justify-start gap-2 md:gap-4">
+                <a href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="line-chart"></i><span class="hidden md:inline">Pumpfun</span></a>
+                <a href="https://youtube.com/@ericemprende-finanzas?si=hL_aJy3R916mPFZD" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="youtube"></i><span class="hidden md:inline">YouTube</span></a>
+                <a href="https://x.com/ericemprende" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="twitter"></i><span class="hidden md:inline">X</span></a>
+            </div>
+            <div id="user-info" class="flex items-center gap-4">
+                <button id="my-graffiti-btn" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="history"></i> <span class="hidden md:inline">Mis Grafitis</span></button>
+                <div class="text-right">
+                    <p class="font-semibold text-white" id="username-display"></p>
+                    <button id="logout-btn" class="text-xs text-indigo-400 hover:underline">Cerrar Sesión</button>
+                </div>
+            </div>
+        </header>
+
+        <button id="create-graffiti-btn" class="absolute bottom-5 right-5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full p-4 shadow-lg hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-indigo-500 z-10 pulse-animation">
+            <i data-lucide="pen-square"></i>
+        </button>
+    </div>
+    
+    <!-- Popup de OpenLayers -->
+    <div id="popup" class="ol-popup"><a href="#" id="popup-closer" class="ol-popup-closer">✖</a><div id="popup-content"></div></div>
+    
+    <!-- Modal para crear Grafiti -->
+    <div id="graffiti-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md modal-fade-in border border-slate-700">
+            <h2 class="text-2xl font-bold mb-4 text-white">Añadir Grafiti</h2>
+            <form id="graffiti-form">
+                <input type="hidden" id="latitude" name="latitude"><input type="hidden" id="longitude" name="longitude">
+                <div class="mb-4">
+                    <label for="address" class="block text-sm font-medium text-slate-300">O busca una dirección</label>
+                    <div class="flex"><input type="text" id="address" class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-white sm:text-sm"><button type="button" id="search-address" class="ml-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Buscar</button></div>
+                </div>
+                <div class="mb-4"><label for="description" class="block text-sm font-medium text-slate-300">Descripción</label><textarea id="description" rows="3" class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-white sm:text-sm" required></textarea></div>
+                <div class="mb-4"><label for="color" class="block text-sm font-medium text-slate-300">Color del marcador</label><input type="color" id="color" value="#8b5cf6" class="mt-1 block w-full h-10 border-slate-600 rounded-md bg-slate-700"></div>
+                
+                <!-- Opciones de Media -->
+                 <div class="mb-4 space-y-3">
+                    <div>
+                        <label for="image-url" class="block text-sm font-medium text-slate-300">URL de Imagen</label>
+                        <input type="url" id="image-url" placeholder="https://ejemplo.com/imagen.jpg" class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white">
+                        <div id="image-url-preview" class="mt-2"></div>
+                    </div>
+                     <div>
+                        <label for="video-url" class="block text-sm font-medium text-slate-300">URL de Video</label>
+                        <input type="url" id="video-url" placeholder="https://ejemplo.com/video.mp4" class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white">
+                        <div id="video-url-preview" class="mt-2"></div>
+                    </div>
+                    <div class="text-center text-slate-400 text-xs">O sube un archivo (máx 50MB)</div>
+                    <input type="file" id="image-file" accept="image/*" class="mt-1 block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600 transition">
+                    <input type="file" id="video-file" accept="video/*" class="mt-1 block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500 file:text-white hover:file:bg-purple-600 transition">
+                </div>
+
+                <div id="upload-progress-container" class="w-full bg-slate-600 rounded-full h-2.5 mt-2 hidden"><div id="upload-progress-bar" class="bg-gradient-to-r from-indigo-500 to-purple-600 h-2.5 rounded-full" style="width: 0%"></div></div>
+                <div class="flex justify-end space-x-2"><button type="button" id="cancel-graffiti" class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-500 transition">Cancelar</button><button type="submit" id="submit-graffiti" class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-md hover:from-indigo-600 hover:to-purple-700 transition">Guardar</button></div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal de "Mis Grafitis" -->
+    <div id="my-graffiti-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-lg modal-fade-in border border-slate-700 flex flex-col" style="height: 70vh;">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2"><i data-lucide="history"></i> Mi Historial</h2>
+                <button id="close-my-graffiti-modal" class="text-slate-400 hover:text-white transition"><i data-lucide="x"></i></button>
+            </div>
+            <div id="my-graffiti-list" class="flex-grow overflow-y-auto pr-2">
+                <!-- El contenido se generará con JS -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvk61LjapStYDRvUJY2duNbYZxvK6BCOk",
+            authDomain: "carreras-pro.firebaseapp.com",
+            projectId: "carreras-pro",
+            storageBucket: "carreras-pro.appspot.com",
+            messagingSenderId: "691582453913",
+            appId: "1:691582453913:web:1e1a607c1aae110f325008",
+            measurementId: "G-0LC4YDBWPL"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        let userId;
+        let map; 
+        let isPlacingGraffiti = false;
+        
+        const authContainer = document.getElementById('auth-container');
+        const mapAppContainer = document.getElementById('map-app-container');
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                const userDocRef = doc(db, "users", userId);
+                const userDoc = await getDoc(userDocRef);
+                const username = userDoc.exists() ? userDoc.data().username : user.email.split('@')[0];
+                document.getElementById('username-display').textContent = username;
+
+                authContainer.classList.add('hidden');
+                mapAppContainer.classList.remove('hidden');
+
+                if (!map) {
+                    setupMap();
+                }
+                listenToMyGraffiti();
+                lucide.createIcons(); // Activar iconos
+            } else {
+                authContainer.classList.remove('hidden');
+                mapAppContainer.classList.add('hidden');
+            }
+        });
+
+        // Lógica de autenticación...
+        document.getElementById('show-register').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('login-form-container').classList.add('hidden'); document.getElementById('register-form-container').classList.remove('hidden'); });
+        document.getElementById('show-login').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('register-form-container').classList.add('hidden'); document.getElementById('login-form-container').classList.remove('hidden'); });
+        
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+            const errorP = document.getElementById('register-error');
+            errorP.textContent = '';
+            const email = `${username.trim().toLowerCase()}@graffiti-map.com`;
+            
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await setDoc(doc(db, "users", userCredential.user.uid), { username: username });
+            } catch (error) {
+                errorP.textContent = error.code === 'auth/email-already-in-use' ? 'Este nombre de usuario ya existe.' : (error.code === 'auth/weak-password' ? 'La contraseña debe tener al menos 6 caracteres.' : 'Error al registrar.');
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const errorP = document.getElementById('login-error');
+            errorP.textContent = '';
+            const email = `${username.trim().toLowerCase()}@graffiti-map.com`;
+            try { await signInWithEmailAndPassword(auth, email, password); } catch (error) { errorP.textContent = 'Usuario o contraseña incorrectos.'; }
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+        // Lógica de Popup y Mapa
+        const popupContainer = document.getElementById('popup');
+        const popupContent = document.getElementById('popup-content');
+        const popupCloser = document.getElementById('popup-closer');
+        const overlay = new ol.Overlay({ element: popupContainer, autoPan: { animation: { duration: 250 } } });
+        popupCloser.onclick = () => { overlay.setPosition(undefined); popupCloser.blur(); return false; };
+
+        function setupMap() {
+            const graffitiLayer = new ol.layer.Vector({
+                source: new ol.source.Vector(),
+                style: (feature) => new ol.style.Style({
+                    image: new ol.style.Circle({
+                        radius: 8,
+                        fill: new ol.style.Fill({ color: feature.get('color') || '#8b5cf6' }),
+                        stroke: new ol.style.Stroke({ color: 'rgba(255,255,255,0.8)', width: 2.5 })
+                    })
+                })
+            });
+
+            // Usar mapa base oscuro de CartoDB
+            const tileLayer = new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                    url: 'https://{a-d}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+                    attributions: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                })
+            });
+
+            map = new ol.Map({
+                target: 'map',
+                layers: [tileLayer, graffitiLayer],
+                view: new ol.View({ center: ol.proj.fromLonLat([-74.006, 40.7128]), zoom: 3 }),
+                overlays: [overlay],
+                controls: [] // Controles personalizados si se desean
+            });
+            
+            // Cargar todos los grafitis
+            const graffitiCollectionRef = collection(db, `graffiti`);
+            onSnapshot(query(graffitiCollectionRef), (snapshot) => {
+                graffitiLayer.getSource().clear();
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const feature = new ol.Feature({
+                        geometry: new ol.geom.Point(ol.proj.fromLonLat(data.coordinates)),
+                        description: data.description, videoUrl: data.videoUrl, imageUrl: data.imageUrl, color: data.color, authorUsername: data.authorUsername
+                    });
+                    graffitiLayer.getSource().addFeature(feature);
+                });
+            });
+
+            const createBtn = document.getElementById('create-graffiti-btn');
+            const mapElement = document.getElementById('map');
+            const modal = document.getElementById('graffiti-modal');
+
+            createBtn.addEventListener('click', () => {
+                isPlacingGraffiti = true;
+                mapElement.classList.add('map-cursor-add');
+                createBtn.classList.remove('pulse-animation');
+                createBtn.innerHTML = `<span class="text-sm px-2">Haz clic en el mapa</span>`;
+            });
+            
+            function resetPlacingMode() {
+                isPlacingGraffiti = false;
+                mapElement.classList.remove('map-cursor-add');
+                createBtn.classList.add('pulse-animation');
+                createBtn.innerHTML = `<i data-lucide="pen-square"></i>`;
+                lucide.createIcons();
+            }
+
+            map.on('click', (evt) => {
+                if (isPlacingGraffiti) {
+                    const coords = ol.proj.toLonLat(evt.coordinate);
+                    document.getElementById('latitude').value = coords[1];
+                    document.getElementById('longitude').value = coords[0];
+                    modal.classList.remove('hidden');
+                    resetPlacingMode();
+                }
+            });
+
+            map.on('pointermove', (e) => {
+                map.getTargetElement().style.cursor = map.hasFeatureAtPixel(e.pixel) ? 'pointer' : (isPlacingGraffiti ? 'crosshair' : '');
+            });
+
+            map.on('singleclick', async (evt) => {
+                if (isPlacingGraffiti) return;
+                const feature = map.forEachFeatureAtPixel(evt.pixel, (f) => f);
+                if (feature) {
+                    const coordinates = feature.getGeometry().getCoordinates();
+                    let content = `<h4 class="font-bold text-lg text-white">${feature.get('description')}</h4>`;
+                    if (feature.get('authorUsername')) content += `<p class="text-xs text-slate-400 mb-2">Por: ${feature.get('authorUsername')}</p>`;
+                    if (feature.get('imageUrl')) content += `<img src="${feature.get('imageUrl')}" alt="Graffiti Image">`;
+                    if (feature.get('videoUrl')) content += `<video controls src="${feature.get('videoUrl')}"></video>`;
+                    popupContent.innerHTML = content;
+                    overlay.setPosition(coordinates);
+                } else {
+                    overlay.setPosition(undefined);
+                }
+            });
+        }
+        
+        // Lógica de Modales (Crear Grafiti y Mis Grafitis)
+        const graffitiModal = document.getElementById('graffiti-modal');
+        const graffitiForm = document.getElementById('graffiti-form');
+        const myGraffitiModal = document.getElementById('my-graffiti-modal');
+        const imageUrlInput = document.getElementById('image-url');
+        const videoUrlInput = document.getElementById('video-url');
+        const imageFileInput = document.getElementById('image-file');
+        const videoFileInput = document.getElementById('video-file');
+
+        function setupMediaInputs() {
+            const inputs = [imageUrlInput, videoUrlInput, imageFileInput, videoFileInput];
+            const urlInputs = [imageUrlInput, videoUrlInput];
+            const fileInputs = [imageFileInput, videoFileInput];
+
+            const updateInputs = (activeInput) => {
+                inputs.forEach(input => {
+                    if (input !== activeInput) {
+                        input.disabled = !!(activeInput.value || activeInput.files.length > 0);
+                        if(input.disabled) input.value = '';
+                    }
+                });
+                updateUrlPreview(imageUrlInput, 'image-url-preview', 'img');
+                updateUrlPreview(videoUrlInput, 'video-url-preview', 'video');
+            };
+
+            inputs.forEach(input => {
+                input.addEventListener('input', () => updateInputs(input));
+                input.addEventListener('change', () => updateInputs(input));
+            });
+        }
+        setupMediaInputs();
+
+        function updateUrlPreview(inputElement, previewElementId, type) {
+            const previewContainer = document.getElementById(previewElementId);
+            const url = inputElement.value;
+            previewContainer.innerHTML = '';
+            if (url) {
+                try {
+                    new URL(url); // Valida la URL
+                    if (type === 'img') {
+                        previewContainer.innerHTML = `<img src="${url}" class="max-w-full rounded-md border border-slate-600">`;
+                    } else if (type === 'video') {
+                        previewContainer.innerHTML = `<video controls src="${url}" class="max-w-full rounded-md border border-slate-600"></video>`;
+                    }
+                } catch (_) {
+                    // URL no válida
+                }
+            }
+        }
+
+        document.getElementById('cancel-graffiti').addEventListener('click', () => { graffitiModal.classList.add('hidden'); graffitiForm.reset(); updateUrlPreview(imageUrlInput, 'image-url-preview'); updateUrlPreview(videoUrlInput, 'video-url-preview'); [imageUrlInput, videoUrlInput, imageFileInput, videoFileInput].forEach(i => i.disabled = false); });
+        document.getElementById('my-graffiti-btn').addEventListener('click', () => myGraffitiModal.classList.remove('hidden'));
+        document.getElementById('close-my-graffiti-modal').addEventListener('click', () => myGraffitiModal.classList.add('hidden'));
+
+        graffitiForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submit-graffiti');
+            submitBtn.disabled = true; submitBtn.textContent = 'Guardando...';
+
+            const [description, color, lat, lon] = [
+                document.getElementById('description').value, document.getElementById('color').value,
+                parseFloat(document.getElementById('latitude').value), parseFloat(document.getElementById('longitude').value)
+            ];
+            
+            let imageUrl = imageUrlInput.value || null;
+            let videoUrl = videoUrlInput.value || null;
+            const imageFile = imageFileInput.files[0];
+            const videoFile = videoFileInput.files[0];
+            
+            const fileToUpload = imageFile || videoFile;
+
+            if (fileToUpload) {
+                if (fileToUpload.size > 50 * 1024 * 1024) {
+                    alert("El archivo no puede pesar más de 50MB.");
+                    submitBtn.disabled = false; submitBtn.textContent = 'Guardar'; return;
+                }
+                const mediaType = imageFile ? 'image' : 'video';
+                const progressContainer = document.getElementById('upload-progress-container');
+                const progressBar = document.getElementById('upload-progress-bar');
+                progressContainer.classList.remove('hidden');
+
+                const storageRef = ref(storage, `graffiti/${userId}/${Date.now()}_${fileToUpload.name}`);
+                const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
+                
+                const downloadUrl = await new Promise((resolve, reject) => {
+                     uploadTask.on('state_changed', 
+                        (snapshot) => { progressBar.style.width = ((snapshot.bytesTransferred / snapshot.totalBytes) * 100) + '%'; }, 
+                        (error) => { reject(error); }, 
+                        async () => { resolve(await getDownloadURL(uploadTask.snapshot.ref)); }
+                    );
+                });
+                if (mediaType === 'image') imageUrl = downloadUrl;
+                if (mediaType === 'video') videoUrl = downloadUrl;
+                progressContainer.classList.add('hidden'); progressBar.style.width = '0%';
+            }
+            
+            const userDoc = await getDoc(doc(db, "users", userId));
+            const authorUsername = userDoc.exists() ? userDoc.data().username : "Anónimo";
+
+            await addDoc(collection(db, `graffiti`), {
+                coordinates: [lon, lat], description, color, imageUrl, videoUrl,
+                author: userId, authorUsername, createdAt: new Date()
+            });
+            
+            document.getElementById('cancel-graffiti').click(); // Reusa la lógica de cancelar para resetear
+            submitBtn.disabled = false; submitBtn.textContent = 'Guardar';
+        });
+        
+        document.getElementById('search-address').addEventListener('click', async () => {
+            const address = document.getElementById('address').value; if(!address) return;
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+            const data = await response.json();
+            if(data && data.length > 0) {
+                const [lon, lat] = [parseFloat(data[0].lon), parseFloat(data[0].lat)];
+                document.getElementById('latitude').value = lat; document.getElementById('longitude').value = lon;
+                map.getView().animate({ center: ol.proj.fromLonLat([lon, lat]), zoom: 15, duration: 1000 });
+            } else { alert('Dirección no encontrada.'); }
+        });
+        
+        function listenToMyGraffiti() {
+            if (!userId) return;
+            const q = query(collection(db, "graffiti"), where("author", "==", userId));
+            const graffitiList = document.getElementById('my-graffiti-list');
+            
+            onSnapshot(q, (snapshot) => {
+                graffitiList.innerHTML = '';
+                if (snapshot.empty) {
+                    graffitiList.innerHTML = `<p class="text-slate-400 text-center mt-4">Aún no has creado ningún grafiti.</p>`;
+                    return;
+                }
+                snapshot.docs.sort((a,b) => b.data().createdAt.toMillis() - a.data().createdAt.toMillis()).forEach(docSnap => {
+                    const graffiti = docSnap.data();
+                    const div = document.createElement('div');
+                    div.className = 'p-3 bg-slate-700 rounded-lg mb-2 flex justify-between items-center transition hover:bg-slate-600';
+                    div.innerHTML = `
+                        <p class="text-white truncate pr-4">${graffiti.description}</p>
+                        <button class="text-sm bg-indigo-600 px-3 py-1 rounded-md hover:bg-indigo-500 transition flex-shrink-0">Ver</button>
+                    `;
+                    div.querySelector('button').addEventListener('click', () => {
+                        myGraffitiModal.classList.add('hidden');
+                        map.getView().animate({ center: ol.proj.fromLonLat(graffiti.coordinates), zoom: 17, duration: 1000 });
+                    });
+                    graffitiList.appendChild(div);
+                });
+            });
+        }
+
+    </script>
+</body>
+</html>
+

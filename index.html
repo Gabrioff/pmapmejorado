@@ -75,41 +75,23 @@
     <!-- Authentication Screen -->
     <div id="auth-container" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
         <div class="w-full max-w-sm p-8 bg-slate-800 rounded-2xl shadow-2xl border border-slate-700">
-            <!-- Login Form -->
-            <div id="login-form-container">
+            <!-- Unified Auth Form -->
+            <div>
                 <h2 class="text-3xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500 mb-2">Eric Projects</h2>
-                <p class="text-center text-slate-400 mb-6">Log in to make your mark on the world.</p>
-                <form id="login-form">
+                <p class="text-center text-slate-400 mb-6">Enter your credentials to continue.</p>
+                <form id="auth-form">
                     <div class="mb-4">
-                        <label for="login-username" class="block text-sm font-medium text-slate-300">Username</label>
-                        <input type="text" id="login-username" required class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white transition">
+                        <label for="auth-username" class="block text-sm font-medium text-slate-300">Username</label>
+                        <input type="text" id="auth-username" required class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white transition">
                     </div>
                     <div class="mb-6">
-                        <label for="login-password" class="block text-sm font-medium text-slate-300">Password</label>
-                        <input type="password" id="login-password" required class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white transition">
+                        <label for="auth-password" class="block text-sm font-medium text-slate-300">Password</label>
+                        <input type="password" id="auth-password" required class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white transition">
                     </div>
-                    <button type="submit" class="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-md hover:from-indigo-600 hover:to-purple-700 transition transform hover:scale-105 shadow-lg">Login</button>
-                    <p id="login-error" class="text-red-400 text-sm mt-3 text-center h-4"></p>
+                    <button type="submit" id="auth-button" class="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-md hover:from-indigo-600 hover:to-purple-700 transition transform hover:scale-105 shadow-lg">Continue</button>
+                    <p id="auth-error" class="text-red-400 text-sm mt-3 text-center h-4"></p>
                 </form>
-                <p class="mt-4 text-center text-sm text-slate-400">Don't have an account? <a href="#" id="show-register" class="font-medium text-indigo-400 hover:text-indigo-300">Sign Up</a></p>
                 <p class="text-center text-xs text-slate-500 mt-8">by ERIC Team</p>
-            </div>
-            <!-- Registration Form -->
-            <div id="register-form-container" class="hidden">
-                <h2 class="text-3xl font-bold text-center text-white mb-6">Create Account</h2>
-                <form id="register-form">
-                    <div class="mb-4">
-                        <label for="register-username" class="block text-sm font-medium text-slate-300">Username</label>
-                        <input type="text" id="register-username" required class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white transition">
-                    </div>
-                    <div class="mb-6">
-                        <label for="register-password" class="block text-sm font-medium text-slate-300">Password</label>
-                        <input type="password" id="register-password" required class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white transition">
-                    </div>
-                    <button type="submit" class="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-md hover:from-indigo-600 hover:to-purple-700 transition transform hover:scale-105 shadow-lg">Register</button>
-                    <p id="register-error" class="text-red-400 text-sm mt-3 text-center h-4"></p>
-                </form>
-                <p class="mt-4 text-center text-sm text-slate-400">Already have an account? <a href="#" id="show-login" class="font-medium text-indigo-400 hover:text-indigo-300">Log In</a></p>
             </div>
         </div>
     </div>
@@ -220,7 +202,7 @@
     <script type="module">
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, where, setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         const firebaseConfig = {
@@ -265,32 +247,39 @@
             }
         });
 
-        document.getElementById('show-register').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('login-form-container').classList.add('hidden'); document.getElementById('register-form-container').classList.remove('hidden'); });
-        document.getElementById('show-login').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('register-form-container').classList.add('hidden'); document.getElementById('login-form-container').classList.remove('hidden'); });
-        
-        document.getElementById('register-form').addEventListener('submit', async (e) => {
+        document.getElementById('auth-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const username = document.getElementById('register-username').value;
-            const password = document.getElementById('register-password').value;
-            const errorP = document.getElementById('register-error');
+            const username = document.getElementById('auth-username').value;
+            const password = document.getElementById('auth-password').value;
+            const errorP = document.getElementById('auth-error');
+            const authButton = document.getElementById('auth-button');
             errorP.textContent = '';
-            const email = `${username.trim().toLowerCase()}@graffiti-map.com`;
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                await setDoc(doc(db, "users", userCredential.user.uid), { username: username });
-            } catch (error) {
-                errorP.textContent = error.code === 'auth/email-already-in-use' ? 'This username already exists.' : (error.code === 'auth/weak-password' ? 'Password must be at least 6 characters.' : 'Registration error.');
-            }
-        });
+            authButton.disabled = true;
+            authButton.textContent = 'Processing...';
 
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = document.getElementById('login-username').value;
-            const password = document.getElementById('login-password').value;
-            const errorP = document.getElementById('login-error');
-            errorP.textContent = '';
             const email = `${username.trim().toLowerCase()}@graffiti-map.com`;
-            try { await signInWithEmailAndPassword(auth, email, password); } catch (error) { errorP.textContent = 'Incorrect username or password.'; }
+
+            try {
+                // First, try to sign in
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (loginError) {
+                // If user not found, try to register them
+                if (loginError.code === 'auth/invalid-credential' || loginError.code === 'auth/user-not-found') {
+                    try {
+                        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                        await setDoc(doc(db, "users", userCredential.user.uid), { username: username });
+                    } catch (registerError) {
+                        errorP.textContent = registerError.code === 'auth/weak-password' ? 'Password must be at least 6 characters.' : 'Could not create account.';
+                    }
+                } else if (loginError.code === 'auth/wrong-password') {
+                    errorP.textContent = 'Incorrect password.';
+                } else {
+                    errorP.textContent = 'An error occurred. Please try again.';
+                }
+            } finally {
+                authButton.disabled = false;
+                authButton.textContent = 'Continue';
+            }
         });
 
         document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));

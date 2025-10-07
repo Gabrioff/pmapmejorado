@@ -15,6 +15,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Emoji Picker -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -68,15 +70,23 @@
             70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
         }
         .pulse-animation { animation: pulse 2s infinite; }
+        .text-glow {
+             text-shadow: 0 0 8px rgba(74, 222, 128, 0.5), 0 0 20px rgba(74, 222, 128, 0.3);
+        }
+        /* Custom scrollbar for chat */
+        #chat-messages::-webkit-scrollbar { width: 4px; }
+        #chat-messages::-webkit-scrollbar-track { background: #1e293b; }
+        #chat-messages::-webkit-scrollbar-thumb { background: #4ade80; border-radius: 4px; }
     </style>
 </head>
 <body class="bg-slate-950">
 
-    <!-- Authentication Screen -->
-    <div id="auth-container" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
-        <div class="w-full max-w-sm p-8 bg-black/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-800">
+    <!-- Authentication Modal -->
+    <div id="auth-container" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="w-full max-w-sm p-8 bg-black/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-800 modal-fade-in relative">
+            <button id="close-auth-modal" class="absolute top-4 right-4 text-slate-500 hover:text-white transition"><i data-lucide="x"></i></button>
             <div>
-                <h2 class="text-3xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-500 mb-2">Eric Projects</h2>
+                <h2 class="text-3xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-500 mb-2 text-glow">Join the Community</h2>
                 <p class="text-center text-slate-400 mb-6">Enter your credentials to continue.</p>
                 <form id="auth-form">
                     <div class="mb-4">
@@ -100,28 +110,37 @@
     </div>
 
     <!-- Map Container (Fullscreen) -->
-    <div id="map-app-container" class="h-screen w-screen hidden relative">
+    <div id="map-app-container" class="h-screen w-screen relative">
         <div id="map"></div>
 
         <!-- Header over the map -->
         <header class="absolute top-0 left-0 right-0 p-4 z-20 flex flex-col gap-4 bg-gradient-to-b from-black/80 to-transparent">
             <div class="flex justify-between items-center w-full">
-                 <h1 class="hidden sm:block text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-500">Eric Projects</h1>
+                 <h1 class="hidden sm:block text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-500 text-glow">Eric Projects</h1>
                  <div class="flex-1 flex items-center justify-center sm:justify-start gap-2 md:gap-4 sm:ml-6">
                     <a href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="line-chart"></i><span class="hidden md:inline">Pumpfun</span></a>
                     <a href="https://youtube.com/@ericemprende-finanzas?si=hL_aJy3R916mPFZD" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="youtube"></i><span class="hidden md:inline">YouTube</span></a>
                     <a href="https://x.com/ericemprende" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="twitter"></i><span class="hidden md:inline">X</span></a>
                 </div>
-                 <div id="user-info" class="flex items-center gap-4">
+                
+                 <!-- Logged In User Info -->
+                 <div id="user-info" class="hidden items-center gap-4">
                      <div class="text-right">
                         <p class="font-semibold text-white text-lg" id="username-display"></p>
-                        <p class="font-mono text-xs text-green-400" id="user-balance-display">0 SOL</p>
+                        <p class="font-mono text-xs text-green-400 text-glow" id="user-balance-display">0 SOL</p>
                     </div>
-                    <button id="profile-btn" class="text-slate-400 hover:text-white"><i data-lucide="user-circle"></i></button>
-                    <button id="logout-btn" class="text-slate-400 hover:text-white"><i data-lucide="log-out"></i></button>
+                    <button id="profile-btn" class="text-slate-400 hover:text-white transition-transform hover:scale-110"><i data-lucide="user-circle"></i></button>
+                    <button id="logout-btn" class="text-slate-400 hover:text-white transition-transform hover:scale-110"><i data-lucide="log-out"></i></button>
+                </div>
+                
+                <!-- Guest User Login Button -->
+                <div id="guest-info" class="">
+                    <button id="login-btn" class="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-md hover:from-green-600 hover:to-teal-700 transition transform hover:scale-105 shadow-lg">Login / Register</button>
                 </div>
             </div>
-            <div class="w-full max-w-2xl mx-auto">
+            
+            <!-- Prize Pool (visible to all) -->
+            <div id="prize-pool-container" class="w-full max-w-2xl mx-auto hidden">
                  <div class="flex justify-between items-center text-xs text-white mb-1">
                     <span class="font-bold">Prize Pool</span>
                     <span id="prize-pool-total">0 / 1 SOL</span>
@@ -133,20 +152,33 @@
         </header>
 
          <div class="absolute bottom-5 left-5 z-10 flex flex-col gap-3">
-             <button id="challenges-btn" class="bg-black/50 backdrop-blur-sm text-white rounded-full p-4 shadow-lg hover:bg-black/70 border border-slate-700 transition"><i data-lucide="trophy"></i></button>
-            <button id="my-graffiti-btn" class="bg-black/50 backdrop-blur-sm text-white rounded-full p-4 shadow-lg hover:bg-black/70 border border-slate-700 transition"><i data-lucide="history"></i></button>
+             <button data-auth-required="true" id="chat-btn" class="bg-black/50 backdrop-blur-sm text-white rounded-full p-4 shadow-lg hover:bg-black/70 border border-slate-700 transition-transform hover:scale-110"><i data-lucide="message-square"></i></button>
+             <button id="challenges-btn" class="bg-black/50 backdrop-blur-sm text-white rounded-full p-4 shadow-lg hover:bg-black/70 border border-slate-700 transition-transform hover:scale-110"><i data-lucide="trophy"></i></button>
+            <button data-auth-required="true" id="my-graffiti-btn" class="bg-black/50 backdrop-blur-sm text-white rounded-full p-4 shadow-lg hover:bg-black/70 border border-slate-700 transition-transform hover:scale-110"><i data-lucide="history"></i></button>
          </div>
 
-        <button id="create-graffiti-btn" class="absolute bottom-5 right-5 bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-full p-4 shadow-lg hover:from-green-600 hover:to-teal-700 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-slate-950 focus:ring-green-500 z-10 pulse-animation">
+        <button data-auth-required="true" id="create-graffiti-btn" class="absolute bottom-5 right-5 bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-full p-4 shadow-lg hover:from-green-600 hover:to-teal-700 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-slate-950 focus:ring-green-500 z-10 pulse-animation">
             <i data-lucide="pen-square"></i>
         </button>
     </div>
     
     <!-- OpenLayers Popup (for hover) -->
     <div id="popup" class="ol-popup"><div id="popup-content"></div></div>
+
+    <!-- Pre-Graffiti Modal -->
+    <div id="pre-graffiti-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-900 rounded-lg shadow-xl p-8 w-full max-w-sm modal-fade-in border border-slate-800 text-center">
+            <h2 class="text-2xl font-bold text-white mb-6">How do you want to place it?</h2>
+            <div class="flex flex-col gap-4">
+                <button id="pre-graffiti-tap" class="w-full py-3 px-4 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition transform hover:scale-105 flex items-center justify-center gap-2"><i data-lucide="map-pin"></i> Tap on Map</button>
+                <button id="pre-graffiti-search" class="w-full py-3 px-4 bg-slate-700 text-white font-semibold rounded-md hover:bg-slate-600 transition transform hover:scale-105 flex items-center justify-center gap-2"><i data-lucide="search"></i> Search Address</button>
+            </div>
+             <button id="close-pre-graffiti-modal" class="text-slate-500 hover:text-white transition absolute top-4 right-4"><i data-lucide="x"></i></button>
+        </div>
+    </div>
     
     <!-- Add Graffiti Modal -->
-    <div id="graffiti-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+    <div id="graffiti-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-slate-900 rounded-lg shadow-xl p-6 w-full max-w-md modal-fade-in border border-slate-800">
             <h2 class="text-2xl font-bold mb-4 text-white">Add Graffiti</h2>
             <form id="graffiti-form">
@@ -164,7 +196,7 @@
                         <input type="url" id="image-url" placeholder="https://example.com/image.jpg" class="mt-1 block w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-white">
                     </div>
                      <div>
-                        <label for="video-url" class="block text-sm font-medium text-slate-300">YouTube Video URL</label>
+                        <label for="video-url" class="block text-sm font-medium text-slate-300">Video URL (YouTube, TikTok, Instagram)</label>
                         <input type="url" id="video-url" placeholder="https://www.youtube.com/watch?v=..." class="mt-1 block w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-white">
                     </div>
                 </div>
@@ -175,7 +207,7 @@
     </div>
     
     <!-- "My Graffiti" Modal -->
-    <div id="my-graffiti-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+    <div id="my-graffiti-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-slate-900 rounded-lg shadow-xl p-6 w-full max-w-lg modal-fade-in border border-slate-800 flex flex-col" style="height: 70vh;">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold text-white flex items-center gap-2"><i data-lucide="history"></i> My History</h2>
@@ -186,22 +218,32 @@
     </div>
 
     <!-- Challenges Modal -->
-    <div id="challenges-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+    <div id="challenges-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-slate-900 rounded-lg shadow-xl p-6 w-full max-w-lg modal-fade-in border border-slate-800 flex flex-col" style="height: 70vh;">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-white flex items-center gap-2"><i data-lucide="trophy"></i> Active Challenges</h2>
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2"><i data-lucide="trophy"></i> Challenges</h2>
                 <button id="close-challenges-modal" class="text-slate-400 hover:text-white transition"><i data-lucide="x"></i></button>
             </div>
-            <div id="challenges-list" class="flex-grow overflow-y-auto pr-2 space-y-3">
-                 <!-- Challenges will be loaded from Firebase here -->
+            <div class="flex-grow overflow-y-auto pr-2 space-y-6">
+                 <div>
+                    <h3 class="text-lg font-bold text-green-400 border-b border-slate-700 pb-2 mb-3">Ongoing</h3>
+                    <div id="ongoing-challenges-list" class="space-y-3"></div>
+                 </div>
+                 <div>
+                    <h3 class="text-lg font-bold text-slate-400 border-b border-slate-700 pb-2 mb-3">Finished</h3>
+                    <div id="finished-challenges-list" class="space-y-3"></div>
+                 </div>
+                 <div id="admin-challenge-info" class="hidden p-3 bg-slate-800/50 border border-slate-700 rounded-lg text-center text-sm text-slate-400">
+                    <p><b class="text-green-400">Admin Tip:</b> Create and manage challenges directly in your Firebase 'challenges' collection.</p>
+                 </div>
             </div>
         </div>
     </div>
 
     <!-- Profile Modal -->
-    <div id="profile-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-slate-900 rounded-lg shadow-xl p-6 w-full max-w-md modal-fade-in border border-slate-800">
-             <div class="flex justify-between items-center mb-4">
+    <div id="profile-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-900 rounded-lg shadow-xl p-8 w-full max-w-md modal-fade-in border border-slate-800">
+             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-white flex items-center gap-2"><i data-lucide="user-circle"></i> My Profile</h2>
                 <button id="close-profile-modal" class="text-slate-400 hover:text-white transition"><i data-lucide="x"></i></button>
             </div>
@@ -212,29 +254,62 @@
                 </div>
                  <div>
                     <label class="text-sm font-medium text-slate-400">Balance</label>
-                    <p id="profile-balance" class="text-lg font-semibold text-green-400"></p>
+                    <p id="profile-balance" class="text-2xl font-bold text-green-400 text-glow"></p>
                 </div>
                  <div>
                     <label class="text-sm font-medium text-slate-400">Wallet Address</label>
-                    <p id="profile-wallet" class="text-sm font-mono text-slate-300 break-all"></p>
+                    <div id="wallet-display-container">
+                        <p id="profile-wallet" class="text-sm font-mono text-slate-300 break-all bg-slate-800 p-2 rounded-md"></p>
+                        <button id="edit-wallet-btn" class="text-xs text-green-400 hover:underline mt-1">Edit</button>
+                    </div>
+                    <div id="wallet-edit-container" class="hidden">
+                        <input type="text" id="profile-wallet-input" class="text-sm font-mono block w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-white transition">
+                        <button id="save-wallet-btn" class="text-xs bg-green-600 text-white px-2 py-1 rounded-md hover:bg-green-700 mt-2">Save</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Media Viewer Modal (for click) -->
-    <div id="media-viewer-modal" class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center p-4 z-[60] hidden">
-        <div class="bg-slate-900 rounded-lg shadow-xl w-full max-w-2xl modal-fade-in border border-slate-800 flex flex-col relative">
+    <!-- Media Viewer Modal -->
+    <div id="media-viewer-modal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-lg flex items-center justify-center p-4 z-[60] hidden">
+        <div class="bg-slate-800/80 rounded-lg shadow-xl w-full max-w-2xl modal-fade-in border border-slate-700 flex flex-col relative">
              <button id="close-media-viewer" class="absolute -top-3 -right-3 text-slate-400 bg-slate-800 rounded-full p-1.5 border border-slate-700 hover:text-white transition z-10"><i data-lucide="x"></i></button>
-             <div id="media-viewer-content" class="w-full"></div>
+             <div id="media-viewer-content" class="w-full bg-black rounded-t-lg"></div>
              <div class="p-6">
                 <h3 id="media-viewer-title" class="text-2xl font-bold text-white"></h3>
                 <p id="media-viewer-author" class="text-sm text-slate-400 mb-4"></p>
-                <p id="media-viewer-description" class="text-slate-300"></p>
-                <a id="media-viewer-youtube-link" href="#" target="_blank" class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700 transition hidden">
-                    <i data-lucide="youtube"></i> View on YouTube
+                <a id="media-viewer-source-link" href="#" target="_blank" class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition hidden">
+                    <i data-lucide="external-link"></i> View Source
                 </a>
              </div>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div id="chat-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-[70] hidden">
+        <div class="bg-slate-900 rounded-lg shadow-xl w-full max-w-lg modal-fade-in border border-slate-800 flex flex-col" style="height: 80vh;">
+            <div class="flex justify-between items-center p-4 border-b border-slate-800">
+                 <h2 class="text-2xl font-bold text-white flex items-center gap-2"><i data-lucide="message-square"></i> Global Chat</h2>
+                <button id="close-chat-modal" class="text-slate-400 hover:text-white transition"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-4 border-b border-slate-800">
+                <div class="flex bg-slate-800 rounded-md p-1">
+                    <button id="chat-room-english" class="flex-1 py-1 text-sm rounded-md transition">English</button>
+                    <button id="chat-room-espanol" class="flex-1 py-1 text-sm rounded-md transition">Español</button>
+                </div>
+            </div>
+            <div id="chat-messages" class="flex-grow p-4 overflow-y-auto flex flex-col-reverse">
+                <!-- Messages will be appended here -->
+            </div>
+            <div class="p-4 border-t border-slate-800 relative">
+                 <emoji-picker class="absolute bottom-20 right-4" style="display: none;"></emoji-picker>
+                <form id="chat-form" class="flex items-center gap-2">
+                    <button type="button" id="emoji-btn" class="p-2 text-slate-400 hover:text-white transition"><i data-lucide="smile"></i></button>
+                    <input type="text" id="chat-input" placeholder="Type a message..." required class="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-white transition">
+                    <button type="submit" class="p-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition"><i data-lucide="send"></i></button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -243,7 +318,7 @@
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, setDoc, doc, getDoc, serverTimestamp, orderBy, limit, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyBvk61LjapStYDRvUJY2duNbYZxvK6BCOk",
@@ -258,28 +333,26 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        let userId;
+        let userId, username;
         let map; 
         let isPlacingGraffiti = false;
-        let userListener = null; // To unsubscribe from snapshot listener on logout
-        let prizePoolListener = null;
-        let challengesListener = null;
+        let userListener, prizePoolListener, challengesListener, chatListener = null;
+        let currentChatRoom = 'english';
         
         const authContainer = document.getElementById('auth-container');
         const mapAppContainer = document.getElementById('map-app-container');
+        const userInfoHeader = document.getElementById('user-info');
+        const guestInfoHeader = document.getElementById('guest-info');
+        const prizePoolContainer = document.getElementById('prize-pool-container');
 
         // --- AUTH STATE & DATA LISTENERS ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Unsubscribe from previous listeners if they exist
-                if(userListener) userListener();
-                if(prizePoolListener) prizePoolListener();
-                if(challengesListener) challengesListener();
+                [userListener, prizePoolListener, challengesListener, chatListener].forEach(l => l && l());
 
                 const userDocRef = doc(db, "users", user.uid);
                 const userDoc = await getDoc(userDocRef);
 
-                // --- BAN CHECK ---
                 if (userDoc.exists() && userDoc.data().banned === true) {
                     alert("Your account has been suspended.");
                     signOut(auth);
@@ -287,48 +360,57 @@
                 }
 
                 userId = user.uid;
-                const username = userDoc.exists() ? userDoc.data().username : user.email.split('@')[0];
+                username = userDoc.exists() ? userDoc.data().username : user.email.split('@')[0];
                 document.getElementById('username-display').textContent = username;
 
-                authContainer.classList.add('hidden');
-                mapAppContainer.classList.remove('hidden');
+                userInfoHeader.classList.remove('hidden');
+                userInfoHeader.classList.add('flex');
+                guestInfoHeader.classList.add('hidden');
+                prizePoolContainer.classList.remove('hidden');
 
-                if (!map) {
-                    setupMap();
-                }
+                if (!map) setupMap();
+                
                 listenToUserData(user.uid);
                 listenToMyGraffiti();
                 listenToPrizePool();
                 listenToChallenges();
-                lucide.createIcons();
+                listenToChat(currentChatRoom);
             } else {
-                authContainer.classList.remove('hidden');
-                mapAppContainer.classList.add('hidden');
-                // Unsubscribe from listeners on logout
-                if(userListener) userListener();
-                if(prizePoolListener) prizePoolListener();
-                if(challengesListener) challengesListener();
+                userId = null;
+                username = null;
+                [userListener, prizePoolListener, challengesListener, chatListener].forEach(l => l && l());
+                
+                userInfoHeader.classList.add('hidden');
+                userInfoHeader.classList.remove('flex');
+                guestInfoHeader.classList.remove('hidden');
+                prizePoolContainer.classList.add('hidden');
+
+                if (!map) setupMap();
+                listenToChallenges(); // Guests can see challenges
             }
+            lucide.createIcons();
         });
+        
+        document.getElementById('login-btn').addEventListener('click', () => authContainer.classList.remove('hidden'));
+        document.getElementById('close-auth-modal').addEventListener('click', () => authContainer.classList.add('hidden'));
 
         document.getElementById('auth-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const username = document.getElementById('auth-username').value;
+            const usernameInput = document.getElementById('auth-username').value;
             const password = document.getElementById('auth-password').value;
             const walletAddress = document.getElementById('auth-wallet').value;
             const errorP = document.getElementById('auth-error');
             const authButton = document.getElementById('auth-button');
 
             if (!walletAddress || walletAddress.length < 32 || walletAddress.length > 44) {
-                errorP.textContent = 'Please enter a valid Solana wallet address.';
-                return;
+                errorP.textContent = 'Please enter a valid Solana wallet address.'; return;
             }
 
             errorP.textContent = '';
             authButton.disabled = true;
             authButton.textContent = 'Processing...';
 
-            const email = `${username.trim().toLowerCase()}@graffiti-map.com`;
+            const email = `${usernameInput.trim().toLowerCase()}@graffiti-map.com`;
 
             try {
                 await signInWithEmailAndPassword(auth, email, password);
@@ -337,11 +419,7 @@
                     try {
                         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                         await setDoc(doc(db, "users", userCredential.user.uid), { 
-                            username: username,
-                            walletAddress: walletAddress,
-                            balance: 0,
-                            banned: false,
-                            isAdmin: false // Default to not admin
+                            username: usernameInput, walletAddress, balance: 0, banned: false, isAdmin: false
                         });
                     } catch (registerError) {
                         errorP.textContent = registerError.code === 'auth/weak-password' ? 'Password must be at least 6 characters.' : 'Could not create account.';
@@ -357,57 +435,52 @@
 
         document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
         
-        // Listen to real-time updates for the logged-in user's data
+        // --- REALTIME LISTENERS ---
         function listenToUserData(uid) {
             const userDocRef = doc(db, "users", uid);
             userListener = onSnapshot(userDocRef, (doc) => {
                 if (doc.exists()) {
                     const userData = doc.data();
                     const balance = userData.balance || 0;
-                    // Update header
                     document.getElementById('user-balance-display').textContent = `${balance.toFixed(4)} SOL`;
-                    // Update profile modal
                     document.getElementById('profile-username').textContent = userData.username;
                     document.getElementById('profile-wallet').textContent = userData.walletAddress;
+                    document.getElementById('profile-wallet-input').value = userData.walletAddress;
                     document.getElementById('profile-balance').textContent = `${balance.toFixed(4)} SOL`;
+                    if (userData.isAdmin) document.getElementById('admin-challenge-info').classList.remove('hidden');
                 }
             });
         }
         
-        // Listen to changes in ALL user balances to update the prize pool
         function listenToPrizePool() {
-            const usersRef = collection(db, "users");
-            prizePoolListener = onSnapshot(query(usersRef), (snapshot) => {
-                let totalBalance = 0;
-                snapshot.forEach(doc => {
-                    totalBalance += doc.data().balance || 0;
-                });
-                const prizePoolGoal = 1; // 1 SOL
+            prizePoolListener = onSnapshot(query(collection(db, "users")), (snapshot) => {
+                const totalBalance = snapshot.docs.reduce((sum, doc) => sum + (doc.data().balance || 0), 0);
+                const prizePoolGoal = 1;
                 const percentage = Math.min((totalBalance / prizePoolGoal) * 100, 100);
                 document.getElementById('prize-pool-bar').style.width = `${percentage}%`;
                 document.getElementById('prize-pool-total').textContent = `${totalBalance.toFixed(4)} / ${prizePoolGoal} SOL`;
             });
         }
         
-        // Listen to challenges from Firebase
         function listenToChallenges() {
-            const challengesRef = collection(db, "challenges");
-            const challengesList = document.getElementById('challenges-list');
-            challengesListener = onSnapshot(query(challengesRef), (snapshot) => {
-                challengesList.innerHTML = '';
+            if (challengesListener) challengesListener();
+            challengesListener = onSnapshot(query(collection(db, "challenges")), (snapshot) => {
+                const ongoingList = document.getElementById('ongoing-challenges-list');
+                const finishedList = document.getElementById('finished-challenges-list');
+                ongoingList.innerHTML = '';
+                finishedList.innerHTML = '';
+
                  if (snapshot.empty) {
-                    challengesList.innerHTML = `<p class="text-slate-400 text-center mt-4">No active challenges right now. Check back soon!</p>`;
+                    ongoingList.innerHTML = `<p class="text-slate-400 text-center mt-4">No active challenges right now.</p>`;
                     return;
                 }
+
                 snapshot.forEach(doc => {
                     const challenge = doc.data();
                     let winnersHTML = '';
                     if (challenge.winners && Object.keys(challenge.winners).length > 0) {
-                        winnersHTML += '<h4 class="text-sm font-bold text-slate-400 mt-3">Winners:</h4><ul class="list-disc list-inside text-sm text-slate-300">';
-                        for(const userId in challenge.winners) {
-                            winnersHTML += `<li>${challenge.winners[userId]}</li>`;
-                        }
-                        winnersHTML += '</ul>';
+                        winnersHTML = '<h4 class="text-sm font-bold text-slate-400 mt-3">Winners:</h4><ul class="list-disc list-inside text-sm text-slate-300">' +
+                                      Object.values(challenge.winners).map(name => `<li>${name}</li>`).join('') + '</ul>';
                     }
 
                     const div = document.createElement('div');
@@ -418,210 +491,198 @@
                         ${challenge.reward ? `<p class="text-xs text-green-400 mt-2 font-bold">${challenge.reward} SOL Reward</p>` : ''}
                         ${winnersHTML}
                     `;
-                    challengesList.appendChild(div);
+                    
+                    if(challenge.status === 'ongoing') ongoingList.appendChild(div);
+                    else finishedList.appendChild(div);
                 });
             });
         }
-
-
+        
         // --- MAP LOGIC ---
         const popupContainer = document.getElementById('popup');
         const popupContent = document.getElementById('popup-content');
         const overlay = new ol.Overlay({ element: popupContainer, autoPan: false });
         
-        function getYouTubeVideoId(url) {
-            if (!url) return null;
-            let ID = '';
-            url = url.replace(/(>|<)/gi, '').split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/)/);
-            if (url[2] !== undefined) {
-                ID = url[2].split(/[^0-9a-z_\-]/i);
-                ID = ID[0];
-            } else {
-                ID = url;
+        function generateEmbedHTML(videoUrl, isHover = false) {
+            if (!videoUrl) return '';
+            const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+            if (youtubeRegex.test(videoUrl)) {
+                const videoId = videoUrl.match(youtubeRegex)[1];
+                const params = isHover ? `?autoplay=1&mute=1&controls=0&showinfo=0&loop=1&playlist=${videoId}` : '?autoplay=1';
+                return `<iframe src="https://www.youtube.com/embed/${videoId}${params}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ${!isHover ? 'allowfullscreen' : ''} class="${isHover ? 'pointer-events-none' : ''}"></iframe>`;
             }
-            return ID;
+            const instagramRegex = /https:\/\/(?:www\.)?instagram\.com\/(?:p|reel)\/([a-zA-Z0-9_-]+)/;
+            if (instagramRegex.test(videoUrl)) {
+                 return `<iframe src="https://www.instagram.com/p/${videoUrl.match(instagramRegex)[1]}/embed" width="320" height="400" frameborder="0" scrolling="no" allowtransparency="true"></iframe>`;
+            }
+            const tiktokRegex = /https:\/\/(?:www\.)?tiktok\.com\/.*\/video\/(\d+)/;
+            if (tiktokRegex.test(videoUrl)) {
+                 return isHover ? '' : `<blockquote class="tiktok-embed" cite="${videoUrl}" data-video-id="${videoUrl.match(tiktokRegex)[1]}" style="max-width: 320px;min-width: 320px;" > <section> <a target="_blank" title="video" href="${videoUrl}">Watch on TikTok</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"><\/script>`;
+            }
+            return '';
         }
+
+        const verifiedIconSrc = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%234ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
 
         function setupMap() {
             const graffitiLayer = new ol.layer.Vector({
                 source: new ol.source.Vector(),
-                style: (feature) => new ol.style.Style({
-                    image: new ol.style.Circle({
-                        radius: 8,
-                        fill: new ol.style.Fill({ color: feature.get('color') || '#4ade80' }),
-                        stroke: new ol.style.Stroke({ color: 'rgba(255,255,255,0.8)', width: 2.5 })
-                    })
-                })
-            });
+                style: function(feature) {
+                    const baseStyle = new ol.style.Style({
+                        image: new ol.style.Circle({
+                            radius: 8,
+                            fill: new ol.style.Fill({ color: feature.get('color') || '#4ade80' }),
+                            stroke: new ol.style.Stroke({ color: 'rgba(255,255,255,0.8)', width: 2.5 })
+                        })
+                    });
 
-            const tileLayer = new ol.layer.Tile({
-                source: new ol.source.XYZ({
-                    url: 'https://{a-d}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-                    attributions: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                })
+                    if (feature.get('verifiedWinner') === true) {
+                        const verifiedStyle = new ol.style.Style({
+                            image: new ol.style.Icon({
+                                src: verifiedIconSrc,
+                                anchor: [0.5, 0.5],
+                                scale: 1.2,
+                                offset: [10, -10] // Position top-right
+                            })
+                        });
+                        return [baseStyle, verifiedStyle];
+                    }
+                    return baseStyle;
+                }
             });
 
             map = new ol.Map({
                 target: 'map',
-                layers: [tileLayer, graffitiLayer],
+                layers: [ new ol.layer.Tile({ source: new ol.source.XYZ({ url: 'https://{a-d}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', attributions: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>' }) }), graffitiLayer ],
                 view: new ol.View({ center: ol.proj.fromLonLat([-74.006, 40.7128]), zoom: 3 }),
-                overlays: [overlay],
-                controls: []
+                overlays: [overlay], controls: []
             });
 
             onSnapshot(query(collection(db, `graffiti`)), (snapshot) => {
                 graffitiLayer.getSource().clear();
                 snapshot.forEach((doc) => {
                     const data = doc.data();
-                    const feature = new ol.Feature({
-                        geometry: new ol.geom.Point(ol.proj.fromLonLat(data.coordinates)),
-                        ...data
-                    });
-                    graffitiLayer.getSource().addFeature(feature);
+                    graffitiLayer.getSource().addFeature(new ol.Feature({ geometry: new ol.geom.Point(ol.proj.fromLonLat(data.coordinates)), ...data }));
                 });
             });
-
-            const createBtn = document.getElementById('create-graffiti-btn');
-            const mapElement = document.getElementById('map');
-            const modal = document.getElementById('graffiti-modal');
-
-            createBtn.addEventListener('click', () => {
-                isPlacingGraffiti = true;
-                mapElement.classList.add('map-cursor-add');
-                createBtn.classList.remove('pulse-animation');
-                createBtn.innerHTML = `<span class="text-sm px-2">Click on the map</span>`;
-            });
-
-            function resetPlacingMode() {
-                isPlacingGraffiti = false;
-                mapElement.classList.remove('map-cursor-add');
-                createBtn.classList.add('pulse-animation');
-                createBtn.innerHTML = `<i data-lucide="pen-square"></i>`;
-                lucide.createIcons();
-            }
-
-            map.on('click', (evt) => {
-                if (isPlacingGraffiti) {
-                    const coords = ol.proj.toLonLat(evt.coordinate);
-                    document.getElementById('latitude').value = coords[1];
-                    document.getElementById('longitude').value = coords[0];
-                    modal.classList.remove('hidden');
-                    resetPlacingMode();
-                }
-            });
-
+            
             let hoveredFeature = null;
             map.on('pointermove', (e) => {
-                if (isPlacingGraffiti) {
-                     map.getTargetElement().style.cursor = 'crosshair';
-                     return;
-                }
+                if (isPlacingGraffiti) { map.getTargetElement().style.cursor = 'crosshair'; return; }
                 const feature = map.forEachFeatureAtPixel(e.pixel, f => f);
                 map.getTargetElement().style.cursor = feature ? 'pointer' : '';
-
                 if (feature !== hoveredFeature) {
-                    if (hoveredFeature) {
-                        overlay.setPosition(undefined);
-                    }
+                    overlay.setPosition(undefined);
                     if (feature) {
-                        const coordinates = feature.getGeometry().getCoordinates();
-                        const videoUrl = feature.get('videoUrl');
-                        const imageUrl = feature.get('imageUrl');
-                        let content = `<h4 class="font-bold text-base text-white truncate">${feature.get('description')}</h4>`;
-                        
-                        if (videoUrl) {
-                            const videoId = getYouTubeVideoId(videoUrl);
-                            if (videoId) {
-                                content += `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&showinfo=0&loop=1&playlist=${videoId}" frameborder="0" allow="autoplay" class="pointer-events-none"></iframe>`;
-                            }
+                        const { description, videoUrl, imageUrl } = feature.getProperties();
+                        let content = `<h4 class="font-bold text-base text-white truncate">${description}</h4>`;
+                        if (videoUrl && (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be'))) {
+                            content += generateEmbedHTML(videoUrl, true);
                         } else if (imageUrl) {
                             content += `<img src="${imageUrl}" alt="Graffiti Image">`;
                         }
                         popupContent.innerHTML = content;
-                        overlay.setPosition(coordinates);
+                        overlay.setPosition(feature.getGeometry().getCoordinates());
                     }
                     hoveredFeature = feature;
                 }
             });
 
-            const mediaViewerModal = document.getElementById('media-viewer-modal');
             map.on('singleclick', (evt) => {
-                if (isPlacingGraffiti) return;
-                const feature = map.forEachFeatureAtPixel(evt.pixel, (f) => f);
-
-                if (feature) {
-                    overlay.setPosition(undefined); 
-                    hoveredFeature = null;
-                    
-                    const { description, authorUsername, videoUrl, imageUrl } = feature.getProperties();
-
-                    document.getElementById('media-viewer-title').textContent = description;
-                    document.getElementById('media-viewer-author').textContent = authorUsername ? `By: ${authorUsername}` : '';
-                    document.getElementById('media-viewer-description').textContent = description; 
-                    
-                    const mediaContentEl = document.getElementById('media-viewer-content');
-                    const youtubeLinkEl = document.getElementById('media-viewer-youtube-link');
-                    mediaContentEl.innerHTML = '';
-                    youtubeLinkEl.classList.add('hidden');
-
-                    if (videoUrl) {
-                        const videoId = getYouTubeVideoId(videoUrl);
-                        if (videoId) {
-                            mediaContentEl.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-                            youtubeLinkEl.href = videoUrl;
-                            youtubeLinkEl.classList.remove('hidden');
+                if (isPlacingGraffiti) {
+                    const coords = ol.proj.toLonLat(evt.coordinate);
+                    document.getElementById('latitude').value = coords[1];
+                    document.getElementById('longitude').value = coords[0];
+                    document.getElementById('graffiti-modal').classList.remove('hidden');
+                    document.getElementById('pre-graffiti-modal').classList.add('hidden');
+                    isPlacingGraffiti = false;
+                    map.getTargetElement().classList.remove('map-cursor-add');
+                } else {
+                    const feature = map.forEachFeatureAtPixel(evt.pixel, (f) => f);
+                    if (feature) {
+                        overlay.setPosition(undefined); hoveredFeature = null;
+                        const { description, authorUsername, videoUrl, imageUrl } = feature.getProperties();
+                        document.getElementById('media-viewer-title').textContent = description;
+                        document.getElementById('media-viewer-author').textContent = authorUsername ? `By: ${authorUsername}` : '';
+                        const mediaContentEl = document.getElementById('media-viewer-content');
+                        const sourceLinkEl = document.getElementById('media-viewer-source-link');
+                        mediaContentEl.innerHTML = ''; sourceLinkEl.classList.add('hidden');
+                        
+                        let sourceUrl = videoUrl || imageUrl;
+                        mediaContentEl.innerHTML = videoUrl ? generateEmbedHTML(videoUrl, false) : (imageUrl ? `<img src="${imageUrl}" alt="Graffiti Image">` : '');
+                        
+                        if(sourceUrl) {
+                            sourceLinkEl.href = sourceUrl;
+                            sourceLinkEl.classList.remove('hidden');
                         }
-                    } else if (imageUrl) {
-                        mediaContentEl.innerHTML = `<img src="${imageUrl}" alt="Graffiti Image">`;
+                        document.getElementById('media-viewer-modal').classList.remove('hidden');
+                        lucide.createIcons();
                     }
-                    
-                    mediaViewerModal.classList.remove('hidden');
-                    lucide.createIcons();
                 }
             });
         }
         
         // --- MODAL & FORM LOGIC ---
-        const graffitiModal = document.getElementById('graffiti-modal');
         const graffitiForm = document.getElementById('graffiti-form');
-        const myGraffitiModal = document.getElementById('my-graffiti-modal');
-        const challengesModal = document.getElementById('challenges-modal');
-        const mediaViewerModal = document.getElementById('media-viewer-modal');
-        const profileModal = document.getElementById('profile-modal');
-
-        document.getElementById('cancel-graffiti').addEventListener('click', () => { graffitiModal.classList.add('hidden'); graffitiForm.reset(); });
-        document.getElementById('my-graffiti-btn').addEventListener('click', () => myGraffitiModal.classList.remove('hidden'));
-        document.getElementById('close-my-graffiti-modal').addEventListener('click', () => myGraffitiModal.classList.add('hidden'));
-        document.getElementById('challenges-btn').addEventListener('click', () => challengesModal.classList.remove('hidden'));
-        document.getElementById('close-challenges-modal').addEventListener('click', () => challengesModal.classList.add('hidden'));
-        document.getElementById('profile-btn').addEventListener('click', () => profileModal.classList.remove('hidden'));
-        document.getElementById('close-profile-modal').addEventListener('click', () => profileModal.classList.add('hidden'));
+        const modals = ['graffiti-modal', 'my-graffiti-modal', 'challenges-modal', 'profile-modal', 'chat-modal', 'pre-graffiti-modal'];
+        modals.forEach(id => {
+            document.getElementById(`close-${id.replace('-modal', '')}-modal`)?.addEventListener('click', () => {
+                document.getElementById(id).classList.add('hidden');
+            });
+        });
+        
         document.getElementById('close-media-viewer').addEventListener('click', () => {
-             mediaViewerModal.classList.add('hidden');
+             document.getElementById('media-viewer-modal').classList.add('hidden');
              document.getElementById('media-viewer-content').innerHTML = ''; // Stop video
         });
+
+        document.getElementById('cancel-graffiti').addEventListener('click', () => {
+            document.getElementById('graffiti-modal').classList.add('hidden');
+            graffitiForm.reset();
+        });
+
+        document.querySelectorAll('[data-auth-required="true"]').forEach(elem => {
+            elem.addEventListener('click', (e) => {
+                if(!userId) {
+                    e.stopPropagation();
+                    authContainer.classList.remove('hidden');
+                }
+            });
+        });
+
+        document.getElementById('create-graffiti-btn').addEventListener('click', () => { if(userId) document.getElementById('pre-graffiti-modal').classList.remove('hidden') });
+        document.getElementById('pre-graffiti-tap').addEventListener('click', () => {
+            isPlacingGraffiti = true;
+            map.getTargetElement().classList.add('map-cursor-add');
+            document.getElementById('pre-graffiti-modal').classList.add('hidden');
+        });
+        document.getElementById('pre-graffiti-search').addEventListener('click', () => {
+            document.getElementById('pre-graffiti-modal').classList.add('hidden');
+            document.getElementById('graffiti-modal').classList.remove('hidden');
+        });
+        
+        document.getElementById('my-graffiti-btn').addEventListener('click', () => { if(userId) document.getElementById('my-graffiti-modal').classList.remove('hidden') });
+        document.getElementById('challenges-btn').addEventListener('click', () => document.getElementById('challenges-modal').classList.remove('hidden'));
+        document.getElementById('profile-btn').addEventListener('click', () => { if(userId) document.getElementById('profile-modal').classList.remove('hidden') });
+        document.getElementById('chat-btn').addEventListener('click', () => { if(userId) document.getElementById('chat-modal').classList.remove('hidden') });
 
         graffitiForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = document.getElementById('submit-graffiti');
             submitBtn.disabled = true; submitBtn.textContent = 'Saving...';
-
-            const imageUrl = document.getElementById('image-url').value || null;
-            const videoUrl = document.getElementById('video-url').value || null;
             
-            const [description, color, lat, lon] = [
-                document.getElementById('description').value, document.getElementById('color').value,
-                parseFloat(document.getElementById('latitude').value), parseFloat(document.getElementById('longitude').value)
-            ];
-            const userDoc = await getDoc(doc(db, "users", userId));
-            const authorUsername = userDoc.exists() ? userDoc.data().username : "Anonymous";
-
             await addDoc(collection(db, `graffiti`), {
-                coordinates: [lon, lat], description, color, imageUrl, videoUrl,
-                author: userId, authorUsername, createdAt: new Date()
+                coordinates: [parseFloat(document.getElementById('longitude').value), parseFloat(document.getElementById('latitude').value)],
+                description: document.getElementById('description').value,
+                color: document.getElementById('color').value,
+                imageUrl: document.getElementById('image-url').value || null,
+                videoUrl: document.getElementById('video-url').value || null,
+                author: userId, authorUsername: username, createdAt: serverTimestamp(),
+                verifiedWinner: false
             });
             
-            document.getElementById('cancel-graffiti').click();
+            document.getElementById('graffiti-modal').classList.add('hidden');
+            graffitiForm.reset();
             submitBtn.disabled = false; submitBtn.textContent = 'Save';
         });
 
@@ -636,33 +697,109 @@
             } else { alert('Address not found.'); }
         });
         
+        // Profile Wallet Edit
+        const walletDisplay = document.getElementById('wallet-display-container');
+        const walletEdit = document.getElementById('wallet-edit-container');
+        document.getElementById('edit-wallet-btn').addEventListener('click', () => { walletDisplay.classList.add('hidden'); walletEdit.classList.remove('hidden'); });
+        document.getElementById('save-wallet-btn').addEventListener('click', async () => {
+            const newWallet = document.getElementById('profile-wallet-input').value;
+            if (newWallet && newWallet.length >= 32 && newWallet.length <= 44) {
+                await updateDoc(doc(db, "users", userId), { walletAddress: newWallet });
+                walletDisplay.classList.remove('hidden');
+                walletEdit.classList.add('hidden');
+            } else {
+                alert('Please enter a valid Solana wallet address.');
+            }
+        });
+
         function listenToMyGraffiti() {
             if (!userId) return;
-            const q = query(collection(db, "graffiti"), where("author", "==", userId));
             const graffitiList = document.getElementById('my-graffiti-list');
-            
-            onSnapshot(q, (snapshot) => {
-                graffitiList.innerHTML = '';
-                if (snapshot.empty) {
-                    graffitiList.innerHTML = `<p class="text-slate-400 text-center mt-4">You haven't created any graffiti yet.</p>`;
-                    return;
-                }
-                snapshot.docs.sort((a,b) => b.data().createdAt.toMillis() - a.data().createdAt.toMillis()).forEach(docSnap => {
+            if(userListener) userListener();
+            userListener = onSnapshot(query(collection(db, "graffiti"), where("author", "==", userId)), (snapshot) => {
+                graffitiList.innerHTML = snapshot.empty ? `<p class="text-slate-400 text-center mt-4">You haven't created any graffiti yet.</p>` : '';
+                
+                const docs = snapshot.docs.sort((a,b) => {
+                    const timeA = a.data().createdAt?.toMillis() || 0;
+                    const timeB = b.data().createdAt?.toMillis() || 0;
+                    return timeB - timeA;
+                });
+
+                docs.forEach(docSnap => {
                     const graffiti = docSnap.data();
                     const div = document.createElement('div');
                     div.className = 'p-3 bg-slate-800 rounded-lg mb-2 flex justify-between items-center transition hover:bg-slate-700';
-                    div.innerHTML = `
-                        <p class="text-white truncate pr-4">${graffiti.description}</p>
-                        <button class="text-sm bg-green-600 px-3 py-1 rounded-md hover:bg-green-500 transition flex-shrink-0">View</button>
-                    `;
+                    div.innerHTML = `<p class="text-white truncate pr-4">${graffiti.description}</p><button class="text-sm bg-green-600 px-3 py-1 rounded-md hover:bg-green-500 transition flex-shrink-0">View</button>`;
                     div.querySelector('button').addEventListener('click', () => {
-                        myGraffitiModal.classList.add('hidden');
+                        document.getElementById('my-graffiti-modal').classList.add('hidden');
                         map.getView().animate({ center: ol.proj.fromLonLat(graffiti.coordinates), zoom: 17, duration: 1000 });
                     });
                     graffitiList.appendChild(div);
                 });
             });
         }
+        
+        // --- CHAT LOGIC ---
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatMessages = document.getElementById('chat-messages');
+        const emojiBtn = document.getElementById('emoji-btn');
+        const emojiPicker = document.querySelector('emoji-picker');
+        const roomEnglishBtn = document.getElementById('chat-room-english');
+        const roomEspanolBtn = document.getElementById('chat-room-espanol');
+        
+        function updateChatRoomUI() {
+            if(currentChatRoom === 'english') {
+                roomEnglishBtn.classList.add('bg-green-600', 'text-white');
+                roomEspanolBtn.classList.remove('bg-green-600', 'text-white');
+            } else {
+                roomEspanolBtn.classList.add('bg-green-600', 'text-white');
+                roomEnglishBtn.classList.remove('bg-green-600', 'text-white');
+            }
+        }
+        updateChatRoomUI();
+
+        roomEnglishBtn.addEventListener('click', () => { currentChatRoom = 'english'; updateChatRoomUI(); listenToChat(currentChatRoom); });
+        roomEspanolBtn.addEventListener('click', () => { currentChatRoom = 'espanol'; updateChatRoomUI(); listenToChat(currentChatRoom); });
+        
+        emojiBtn.addEventListener('click', () => emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none');
+        emojiPicker.addEventListener('emoji-click', event => {
+            chatInput.value += event.detail.unicode;
+            emojiPicker.style.display = 'none';
+        });
+
+        function listenToChat(room) {
+            if (chatListener) chatListener();
+            const q = query(collection(db, 'chat', room, 'messages'), orderBy('timestamp', 'desc'), limit(50));
+            chatListener = onSnapshot(q, (snapshot) => {
+                chatMessages.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const msg = doc.data();
+                    const div = document.createElement('div');
+                    div.className = `mb-3 max-w-xs ${msg.authorId === userId ? 'self-end' : 'self-start'}`;
+                    const time = msg.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '';
+                    div.innerHTML = `
+                      <div class="p-3 rounded-lg ${msg.authorId === userId ? 'bg-green-600 text-white' : 'bg-slate-700'}">
+                        ${msg.authorId !== userId ? `<p class="text-xs font-bold text-green-400">${msg.authorName}</p>` : ''}
+                        <p class="text-white break-words">${msg.text}</p>
+                        <p class="text-xs text-right mt-1 ${msg.authorId === userId ? 'text-green-200' : 'text-slate-400'}">${time}</p>
+                      </div>
+                    `;
+                    chatMessages.appendChild(div);
+                });
+            });
+        }
+        
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = chatInput.value.trim();
+            if(text) {
+                chatInput.value = '';
+                await addDoc(collection(db, 'chat', currentChatRoom, 'messages'), {
+                    text, authorId: userId, authorName: username, timestamp: serverTimestamp()
+                });
+            }
+        });
     </script>
 </body>
 </html>

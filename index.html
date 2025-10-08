@@ -74,9 +74,9 @@
              text-shadow: 0 0 8px rgba(74, 222, 128, 0.5), 0 0 20px rgba(74, 222, 128, 0.3);
         }
         /* Custom scrollbar for chat */
-        #chat-messages::-webkit-scrollbar { width: 4px; }
-        #chat-messages::-webkit-scrollbar-track { background: #1e293b; }
-        #chat-messages::-webkit-scrollbar-thumb { background: #4ade80; border-radius: 4px; }
+        #chat-messages::-webkit-scrollbar, #my-graffiti-list::-webkit-scrollbar, .challenge-list-container::-webkit-scrollbar { width: 4px; }
+        #chat-messages::-webkit-scrollbar-track, #my-graffiti-list::-webkit-scrollbar-track, .challenge-list-container::-webkit-scrollbar-track { background: #1e293b; }
+        #chat-messages::-webkit-scrollbar-thumb, #my-graffiti-list::-webkit-scrollbar-thumb, .challenge-list-container::-webkit-scrollbar-thumb { background: #4ade80; border-radius: 4px; }
         
         @keyframes toast-in {
             from { transform: translateY(100%); opacity: 0; }
@@ -132,14 +132,13 @@
                  <h1 class="hidden sm:block text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-500 text-glow">Eric Projects</h1>
                  <div class="flex-1 flex items-center justify-center sm:justify-start gap-2 md:gap-4 sm:ml-6">
                     <a href="https://youtube.com/@ericemprende-finanzas?si=hL_aJy3R916mPFZD" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="youtube"></i><span class="hidden md:inline">YouTube</span></a>
-                    <a href="https://x.com/ericemprende" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="twitter"></i><span class="hidden md:inline">X</span></a>
+                    <a href="https://x.com/ericemprende" title="Coming Soon" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2 cursor-not-allowed opacity-50"><i data-lucide="twitter"></i><span class="hidden md:inline">X (Soon)</span></a>
                 </div>
                 
                  <!-- Logged In User Info -->
                  <div id="user-info" class="hidden items-center gap-4">
                      <div class="text-right">
                         <p class="font-semibold text-white text-lg" id="username-display"></p>
-                        <p class="font-mono text-xs text-green-400 text-glow" id="user-balance-display">0 SOL</p>
                     </div>
                     <button id="profile-btn" class="text-slate-400 hover:text-white transition-transform hover:scale-110">
                         <img id="user-avatar" src="https://placehold.co/32x32/1e293b/4ade80?text=P" class="w-8 h-8 rounded-full border-2 border-slate-500 object-cover">
@@ -152,21 +151,10 @@
                     <button id="login-btn" class="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-md hover:from-green-600 hover:to-teal-700 transition transform hover:scale-105 shadow-lg">Login / Register</button>
                 </div>
             </div>
-            
-            <!-- Prize Pool (visible to all) -->
-            <div id="prize-pool-container" class="w-full max-w-2xl mx-auto hidden">
-                 <div class="flex justify-between items-center text-xs text-white mb-1">
-                    <span class="font-bold">Prize Pool</span>
-                    <span id="prize-pool-total">0 / 1 SOL</span>
-                </div>
-                <div class="w-full bg-slate-800 rounded-full h-2.5">
-                    <div id="prize-pool-bar" class="bg-gradient-to-r from-green-500 to-teal-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
-                </div>
-            </div>
         </header>
 
          <div class="absolute bottom-5 left-5 z-10 flex flex-col gap-3">
-             <button id="challenges-btn" class="bg-black/50 backdrop-blur-sm text-white rounded-full p-4 shadow-lg hover:bg-black/70 border border-slate-700 transition-transform hover:scale-110"><i data-lucide="trophy"></i></button>
+             <button id="challenges-btn" class="bg-black/50 backdrop-blur-sm text-white rounded-full p-4 shadow-lg hover:bg-black/70 border border-slate-700 transition-transform hover:scale-110"><i data-lucide="trophy" class="text-yellow-400"></i></button>
              <button data-auth-required="true" id="chat-btn" class="bg-black/50 backdrop-blur-sm text-white rounded-full p-4 shadow-lg hover:bg-black/70 border border-slate-700 transition-transform hover:scale-110"><i data-lucide="message-square"></i></button>
              <button data-auth-required="true" id="my-graffiti-btn" class="bg-black/50 backdrop-blur-sm text-white rounded-full p-4 shadow-lg hover:bg-black/70 border border-slate-700 transition-transform hover:scale-110"><i data-lucide="history"></i></button>
          </div>
@@ -179,6 +167,7 @@
         <div id="donation-widget" class="absolute bottom-5 flex justify-center w-full pointer-events-none">
             <div class="bg-black/50 backdrop-blur-sm p-2 rounded-full flex items-center gap-2 border border-slate-700 shadow-lg pointer-events-auto">
                 <i data-lucide="heart" class="text-red-500"></i>
+                <span class="text-xs text-white">For Donations: </span>
                 <p class="text-xs text-white font-mono hidden sm:block">DpkJ...RBYK</p>
                 <button id="copy-donation-wallet" class="px-3 py-1 text-xs bg-slate-700 text-white rounded-full hover:bg-slate-600 transition">Copy</button>
             </div>
@@ -250,12 +239,12 @@
 
     <!-- Challenges Modal -->
     <div id="challenges-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-slate-900 rounded-lg shadow-xl p-6 w-full max-w-lg modal-fade-in border border-slate-800 flex flex-col" style="height: 70vh;">
+        <div class="bg-slate-900 rounded-lg shadow-xl p-6 w-full max-w-2xl modal-fade-in border border-slate-800 flex flex-col" style="height: 80vh;">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold text-white flex items-center gap-2"><i data-lucide="trophy"></i> Challenges</h2>
                 <button id="close-challenges-modal" class="text-slate-400 hover:text-white transition"><i data-lucide="x"></i></button>
             </div>
-            <div class="flex-grow overflow-y-auto pr-2 space-y-6">
+            <div class="flex-grow overflow-y-auto pr-2 space-y-6 challenge-list-container">
                  <div>
                     <h3 class="text-lg font-bold text-green-400 border-b border-slate-700 pb-2 mb-3">Ongoing</h3>
                     <div id="ongoing-challenges-list" class="space-y-3"></div>
@@ -283,12 +272,11 @@
                      <img id="profile-avatar" src="https://placehold.co/80x80/1e293b/4ade80?text=P" class="w-20 h-20 rounded-full border-4 border-slate-700 object-cover">
                      <div>
                         <p id="profile-username" class="text-xl font-semibold text-white"></p>
-                        <p id="profile-balance" class="text-3xl font-bold text-green-400 text-glow"></p>
                      </div>
                 </div>
 
                 <div id="connect-x-container">
-                    <button id="connect-x-btn" class="w-full py-2.5 px-4 bg-black text-white font-semibold rounded-md hover:bg-gray-800 transition flex items-center justify-center gap-2"><i data-lucide="twitter"></i> Connect with X</button>
+                    <button id="connect-x-btn" class="w-full py-2.5 px-4 bg-black text-white font-semibold rounded-md hover:bg-gray-800 transition flex items-center justify-center gap-2 cursor-not-allowed opacity-50" title="Coming Soon" disabled><i data-lucide="twitter"></i> Connect with X (Soon)</button>
                 </div>
                  <div id="x-info-container" class="hidden">
                     <label class="text-sm font-medium text-slate-400">X Profile</label>
@@ -366,7 +354,7 @@
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, TwitterAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, setDoc, doc, getDoc, serverTimestamp, orderBy, limit, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, setDoc, doc, getDoc, serverTimestamp, orderBy, limit, updateDoc, increment, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyBvk61LjapStYDRvUJY2duNbYZxvK6BCOk",
@@ -384,14 +372,13 @@
         let userId, username;
         let map; 
         let isPlacingGraffiti = false;
-        let userListener, prizePoolListener, challengesListener, chatListener = null;
+        let userListener, prizePoolListener, challengesListener, chatListener, myGraffitiListener = null;
         let currentChatRoom = 'english';
+        let preselectedChallengeId = null;
         
         const authContainer = document.getElementById('auth-container');
-        const mapAppContainer = document.getElementById('map-app-container');
         const userInfoHeader = document.getElementById('user-info');
         const guestInfoHeader = document.getElementById('guest-info');
-        const prizePoolContainer = document.getElementById('prize-pool-container');
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toast-message');
 
@@ -405,9 +392,9 @@
 
         // --- AUTH STATE & DATA LISTENERS ---
         onAuthStateChanged(auth, async (user) => {
+            [userListener, prizePoolListener, chatListener, challengesListener, myGraffitiListener].forEach(l => l && l());
+
             if (user) {
-                [userListener, prizePoolListener, chatListener].forEach(l => l && l());
-                
                 const userDocRef = doc(db, "users", user.uid);
                 const userDoc = await getDoc(userDocRef);
 
@@ -424,27 +411,23 @@
                 userInfoHeader.classList.remove('hidden');
                 userInfoHeader.classList.add('flex');
                 guestInfoHeader.classList.add('hidden');
-                prizePoolContainer.classList.remove('hidden');
-
+                
                 if (!map) setupMap();
                 
                 listenToUserData(user.uid);
                 listenToMyGraffiti();
-                listenToPrizePool();
                 listenToChallenges(); 
                 listenToChat(currentChatRoom);
             } else {
                 userId = null;
                 username = null;
-                [userListener, prizePoolListener, chatListener, challengesListener].forEach(l => l && l());
                 
                 userInfoHeader.classList.add('hidden');
                 userInfoHeader.classList.remove('flex');
                 guestInfoHeader.classList.remove('hidden');
-                prizePoolContainer.classList.add('hidden');
-
+                
                 if (!map) setupMap();
-                listenToChallenges();
+                listenToChallenges(); 
             }
             lucide.createIcons();
         });
@@ -478,7 +461,7 @@
                     try {
                         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                         await setDoc(doc(db, "users", userCredential.user.uid), { 
-                            username: usernameInput, walletAddress, balance: 0, banned: false, isAdmin: false
+                            username: usernameInput, walletAddress, banned: false, isAdmin: false
                         });
                         authContainer.classList.add('hidden');
                     } catch (registerError) {
@@ -501,12 +484,9 @@
             userListener = onSnapshot(userDocRef, (doc) => {
                 if (doc.exists()) {
                     const userData = doc.data();
-                    const balance = userData.balance || 0;
-                    document.getElementById('user-balance-display').textContent = `${balance.toFixed(4)} SOL`;
                     document.getElementById('profile-username').textContent = userData.username;
                     document.getElementById('profile-wallet').textContent = userData.walletAddress;
                     document.getElementById('profile-wallet-input').value = userData.walletAddress;
-                    document.getElementById('profile-balance').textContent = `${balance.toFixed(4)} SOL`;
                     
                     const userAvatar = document.getElementById('user-avatar');
                     const profileAvatar = document.getElementById('profile-avatar');
@@ -519,24 +499,15 @@
                         document.getElementById('profile-x-username').textContent = `@${userData.xUsername}`;
                         document.getElementById('profile-x-link').href = `https://x.com/${userData.xUsername}`;
                     } else {
-                        userAvatar.src = `https://placehold.co/32x32/1e293b/4ade80?text=${(userData.username || 'P').charAt(0).toUpperCase()}`;
-                        profileAvatar.src = `https://placehold.co/80x80/1e293b/4ade80?text=${(userData.username || 'P').charAt(0).toUpperCase()}`;
+                        const initial = (userData.username || 'P').charAt(0).toUpperCase();
+                        userAvatar.src = `https://placehold.co/32x32/1e293b/4ade80?text=${initial}`;
+                        profileAvatar.src = `https://placehold.co/80x80/1e293b/4ade80?text=${initial}`;
                         document.getElementById('connect-x-container').classList.remove('hidden');
                         document.getElementById('x-info-container').classList.add('hidden');
                     }
 
                     if (userData.isAdmin) document.getElementById('admin-challenge-info').classList.remove('hidden');
                 }
-            });
-        }
-        
-        function listenToPrizePool() {
-            prizePoolListener = onSnapshot(query(collection(db, "users")), (snapshot) => {
-                const totalBalance = snapshot.docs.reduce((sum, doc) => sum + (doc.data().balance || 0), 0);
-                const prizePoolGoal = 1;
-                const percentage = Math.min((totalBalance / prizePoolGoal) * 100, 100);
-                document.getElementById('prize-pool-bar').style.width = `${percentage}%`;
-                document.getElementById('prize-pool-total').textContent = `${totalBalance.toFixed(4)} / ${prizePoolGoal} SOL`;
             });
         }
         
@@ -558,13 +529,24 @@
 
                 snapshot.forEach(doc => {
                     const challenge = doc.data();
-                    challenge.id = doc.id; // Store ID for later
+                    challenge.id = doc.id; 
                     
                     let winnersHTML = '';
                     if (challenge.winners && Object.keys(challenge.winners).length > 0) {
                         winnersHTML = '<h4 class="text-sm font-bold text-slate-400 mt-3">Winners:</h4><ul class="list-disc list-inside text-sm text-slate-300">' +
                                       Object.values(challenge.winners).map(name => `<li>${name}</li>`).join('') + '</ul>';
                     }
+                    
+                    let participantsHTML = '';
+                    if (challenge.participants && Object.keys(challenge.participants).length > 0) {
+                        participantsHTML = '<h4 class="text-sm font-bold text-slate-400 mt-3">Participants:</h4><ul class="list-disc list-inside text-sm text-slate-300">' +
+                                      Object.values(challenge.participants).map(name => `<li>${name}</li>`).join('') + '</ul>';
+                    }
+                    
+                    const isFull = challenge.maxParticipants && (challenge.participantCount || 0) >= challenge.maxParticipants;
+                    const buttonHTML = isFull ? 
+                        `<button class="mt-3 w-full py-2 text-sm bg-slate-600 text-slate-400 rounded-md cursor-not-allowed" disabled>Full</button>` :
+                        `<button data-challenge-id="${challenge.id}" class="participate-btn mt-3 w-full py-2 text-sm bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition">Participate</button>`;
 
                     const div = document.createElement('div');
                     div.className = 'p-4 bg-slate-800 rounded-lg';
@@ -575,15 +557,19 @@
                            ${challenge.reward ? `<p class="text-xs text-green-400 font-bold">${challenge.reward} SOL Reward</p>` : '<div></div>'}
                            <p class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="users" class="w-3 h-3"></i>${challenge.participantCount || 0} ${challenge.maxParticipants ? `/ ${challenge.maxParticipants}` : 'Participants'}</p>
                         </div>
+                        ${participantsHTML}
                         ${winnersHTML}
+                        ${challenge.status === 'ongoing' ? buttonHTML : ''}
                     `;
                     
                     if(challenge.status === 'ongoing') {
                         ongoingList.appendChild(div);
-                        const option = document.createElement('option');
-                        option.value = challenge.id;
-                        option.textContent = challenge.title;
-                        challengeDropdown.appendChild(option);
+                        if (!isFull) {
+                            const option = document.createElement('option');
+                            option.value = challenge.id;
+                            option.textContent = challenge.title;
+                            challengeDropdown.appendChild(option);
+                        }
                     } else {
                         finishedList.appendChild(div);
                     }
@@ -652,7 +638,7 @@
                 overlays: [overlay], controls: []
             });
 
-            onSnapshot(query(collection(db, `graffiti`)), (snapshot) => {
+            onSnapshot(query(collection(db, `graffiti`), where("approved", "==", true)), (snapshot) => {
                 graffitiLayer.getSource().clear();
                 snapshot.forEach((doc) => {
                     const data = doc.data();
@@ -707,7 +693,6 @@
                         sourceLinkEl.classList.add('hidden');
                         authorXLink.classList.add('hidden');
                         
-                        // Fetch author's X info
                         if (author) {
                             const authorDoc = await getDoc(doc(db, 'users', author));
                             if(authorDoc.exists() && authorDoc.data().xUsername) {
@@ -774,6 +759,20 @@
         document.getElementById('profile-btn').addEventListener('click', () => { if(userId) document.getElementById('profile-modal').classList.remove('hidden') });
         document.getElementById('chat-btn').addEventListener('click', () => { if(userId) document.getElementById('chat-modal').classList.remove('hidden') });
 
+        document.getElementById('ongoing-challenges-list').addEventListener('click', (e) => {
+            const participateBtn = e.target.closest('.participate-btn');
+            if (participateBtn) {
+                if (!userId) {
+                    document.getElementById('challenges-modal').classList.add('hidden');
+                    authContainer.classList.remove('hidden');
+                    return;
+                }
+                preselectedChallengeId = participateBtn.dataset.challengeId;
+                document.getElementById('challenges-modal').classList.add('hidden');
+                document.getElementById('pre-graffiti-modal').classList.remove('hidden');
+            }
+        });
+
         graffitiForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = document.getElementById('submit-graffiti');
@@ -781,27 +780,49 @@
             
             const linkedChallengeId = document.getElementById('challenge-link').value;
 
-            await addDoc(collection(db, `graffiti`), {
-                coordinates: [parseFloat(document.getElementById('longitude').value), parseFloat(document.getElementById('latitude').value)],
-                description: document.getElementById('description').value,
-                color: document.getElementById('color').value,
-                imageUrl: document.getElementById('image-url').value || null,
-                videoUrl: document.getElementById('video-url').value || null,
-                author: userId, authorUsername: username, createdAt: serverTimestamp(),
-                verifiedWinner: false,
-                linkedChallengeId: linkedChallengeId || null
-            });
-            
-            if (linkedChallengeId) {
-                const challengeRef = doc(db, "challenges", linkedChallengeId);
-                await updateDoc(challengeRef, {
-                    participantCount: increment(1)
-                });
+            try {
+                const newGraffitiData = {
+                    coordinates: [parseFloat(document.getElementById('longitude').value), parseFloat(document.getElementById('latitude').value)],
+                    description: document.getElementById('description').value,
+                    color: document.getElementById('color').value,
+                    imageUrl: document.getElementById('image-url').value || null,
+                    videoUrl: document.getElementById('video-url').value || null,
+                    author: userId, authorUsername: username, createdAt: serverTimestamp(),
+                    verifiedWinner: false,
+                    approved: false, 
+                    linkedChallengeId: linkedChallengeId || null
+                };
+                
+                if (linkedChallengeId) {
+                    const challengeRef = doc(db, "challenges", linkedChallengeId);
+                    await runTransaction(db, async (transaction) => {
+                        const challengeDoc = await transaction.get(challengeRef);
+                        if (!challengeDoc.exists()) throw "Challenge does not exist!";
+                        
+                        const newParticipants = { ...challengeDoc.data().participants, [userId]: username };
+                        transaction.update(challengeRef, { 
+                            participantCount: increment(1),
+                            participants: newParticipants
+                        });
+                        
+                        const graffitiRef = doc(collection(db, "graffiti"));
+                        transaction.set(graffitiRef, newGraffitiData);
+                    });
+                } else {
+                     await addDoc(collection(db, `graffiti`), newGraffitiData);
+                }
+
+                document.getElementById('graffiti-modal').classList.add('hidden');
+                graffitiForm.reset();
+                showToast('Graffiti submitted for approval!');
+
+            } catch (error) {
+                console.error("Error saving graffiti:", error);
+                alert("Could not save graffiti. Please try again.");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save';
             }
-            
-            document.getElementById('graffiti-modal').classList.add('hidden');
-            graffitiForm.reset();
-            submitBtn.disabled = false; submitBtn.textContent = 'Save';
         });
 
         document.getElementById('search-address').addEventListener('click', async () => {
@@ -830,44 +851,31 @@
             }
         });
         
-        document.getElementById('connect-x-btn').addEventListener('click', async () => {
-            const provider = new TwitterAuthProvider();
-            try {
-                const result = await signInWithPopup(auth, provider);
-                const credential = TwitterAuthProvider.credentialFromResult(result);
-                // This gives you a the Twitter OAuth 1.0 Access Token and Secret.
-                // You can use these server side to make requests to the Twitter API.
-                const token = credential.accessToken;
-                const secret = credential.secret;
-                const user = result.user;
-                
-                const xUsername = user.reloadUserInfo.screenName;
-                const xProfileImageUrl = user.photoURL.replace('_normal', '_400x400'); // Get larger image
-
-                await updateDoc(doc(db, "users", userId), { xUsername, xProfileImageUrl });
-                showToast('X account connected!');
-
-            } catch (error) {
-                console.error("X connection error:", error);
-                showToast('Failed to connect X account.');
-            }
-        });
-
-
         function listenToMyGraffiti() {
             if (!userId) return;
+            if (myGraffitiListener) myGraffitiListener();
             const graffitiList = document.getElementById('my-graffiti-list');
             const q = query(collection(db, "graffiti"), where("author", "==", userId));
-            onSnapshot(q, (snapshot) => {
+            myGraffitiListener = onSnapshot(q, (snapshot) => {
                 graffitiList.innerHTML = snapshot.empty ? `<p class="text-slate-400 text-center mt-4">You haven't created any graffiti yet.</p>` : '';
                 
                 const docs = snapshot.docs.sort((a,b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
 
                 docs.forEach(docSnap => {
                     const graffiti = docSnap.data();
+                    const status = graffiti.approved ? 
+                        `<span class="text-xs font-bold text-green-400">Approved</span>` : 
+                        `<span class="text-xs font-bold text-yellow-400">Pending Approval</span>`;
+
                     const div = document.createElement('div');
                     div.className = 'p-3 bg-slate-800 rounded-lg mb-2 flex justify-between items-center transition hover:bg-slate-700';
-                    div.innerHTML = `<p class="text-white truncate pr-4">${graffiti.description}</p><button class="text-sm bg-green-600 px-3 py-1 rounded-md hover:bg-green-500 transition flex-shrink-0">View</button>`;
+                    div.innerHTML = `
+                        <div>
+                            <p class="text-white truncate pr-4">${graffiti.description}</p>
+                            ${status}
+                        </div>
+                        <button class="text-sm bg-green-600 px-3 py-1 rounded-md hover:bg-green-500 transition flex-shrink-0">View</button>
+                    `;
                     div.querySelector('button').addEventListener('click', () => {
                         document.getElementById('my-graffiti-modal').classList.add('hidden');
                         map.getView().animate({ center: ol.proj.fromLonLat(graffiti.coordinates), zoom: 17, duration: 1000 });

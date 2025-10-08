@@ -77,9 +77,22 @@
         #chat-messages::-webkit-scrollbar { width: 4px; }
         #chat-messages::-webkit-scrollbar-track { background: #1e293b; }
         #chat-messages::-webkit-scrollbar-thumb { background: #4ade80; border-radius: 4px; }
+        
+        @keyframes toast-in {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast {
+            animation: toast-in 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
     </style>
 </head>
 <body class="bg-slate-950">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-[100] hidden toast">
+        <p id="toast-message"></p>
+    </div>
 
     <!-- Authentication Modal -->
     <div id="auth-container" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
@@ -118,7 +131,6 @@
             <div class="flex justify-between items-center w-full">
                  <h1 class="hidden sm:block text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-500 text-glow">Eric Projects</h1>
                  <div class="flex-1 flex items-center justify-center sm:justify-start gap-2 md:gap-4 sm:ml-6">
-                    <a href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="line-chart"></i><span class="hidden md:inline">Pumpfun</span></a>
                     <a href="https://youtube.com/@ericemprende-finanzas?si=hL_aJy3R916mPFZD" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="youtube"></i><span class="hidden md:inline">YouTube</span></a>
                     <a href="https://x.com/ericemprende" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="twitter"></i><span class="hidden md:inline">X</span></a>
                 </div>
@@ -129,7 +141,9 @@
                         <p class="font-semibold text-white text-lg" id="username-display"></p>
                         <p class="font-mono text-xs text-green-400 text-glow" id="user-balance-display">0 SOL</p>
                     </div>
-                    <button id="profile-btn" class="text-slate-400 hover:text-white transition-transform hover:scale-110"><i data-lucide="user-circle"></i></button>
+                    <button id="profile-btn" class="text-slate-400 hover:text-white transition-transform hover:scale-110">
+                        <img id="user-avatar" src="https://placehold.co/32x32/1e293b/4ade80?text=P" class="w-8 h-8 rounded-full border-2 border-slate-500 object-cover">
+                    </button>
                     <button id="logout-btn" class="text-slate-400 hover:text-white transition-transform hover:scale-110"><i data-lucide="log-out"></i></button>
                 </div>
                 
@@ -152,14 +166,24 @@
         </header>
 
          <div class="absolute bottom-5 left-5 z-10 flex flex-col gap-3">
-             <button data-auth-required="true" id="chat-btn" class="bg-black/50 backdrop-blur-sm text-white rounded-full p-4 shadow-lg hover:bg-black/70 border border-slate-700 transition-transform hover:scale-110"><i data-lucide="message-square"></i></button>
              <button id="challenges-btn" class="bg-black/50 backdrop-blur-sm text-white rounded-full p-4 shadow-lg hover:bg-black/70 border border-slate-700 transition-transform hover:scale-110"><i data-lucide="trophy"></i></button>
-            <button data-auth-required="true" id="my-graffiti-btn" class="bg-black/50 backdrop-blur-sm text-white rounded-full p-4 shadow-lg hover:bg-black/70 border border-slate-700 transition-transform hover:scale-110"><i data-lucide="history"></i></button>
+             <button data-auth-required="true" id="chat-btn" class="bg-black/50 backdrop-blur-sm text-white rounded-full p-4 shadow-lg hover:bg-black/70 border border-slate-700 transition-transform hover:scale-110"><i data-lucide="message-square"></i></button>
+             <button data-auth-required="true" id="my-graffiti-btn" class="bg-black/50 backdrop-blur-sm text-white rounded-full p-4 shadow-lg hover:bg-black/70 border border-slate-700 transition-transform hover:scale-110"><i data-lucide="history"></i></button>
          </div>
 
         <button data-auth-required="true" id="create-graffiti-btn" class="absolute bottom-5 right-5 bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-full p-4 shadow-lg hover:from-green-600 hover:to-teal-700 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-slate-950 focus:ring-green-500 z-10 pulse-animation">
             <i data-lucide="pen-square"></i>
         </button>
+
+        <!-- Donation Section -->
+        <div id="donation-widget" class="absolute bottom-5 flex justify-center w-full pointer-events-none">
+            <div class="bg-black/50 backdrop-blur-sm p-2 rounded-full flex items-center gap-2 border border-slate-700 shadow-lg pointer-events-auto">
+                <i data-lucide="heart" class="text-red-500"></i>
+                <p class="text-xs text-white font-mono hidden sm:block">DpkJ...RBYK</p>
+                <button id="copy-donation-wallet" class="px-3 py-1 text-xs bg-slate-700 text-white rounded-full hover:bg-slate-600 transition">Copy</button>
+            </div>
+        </div>
+
     </div>
     
     <!-- OpenLayers Popup (for hover) -->
@@ -186,6 +210,13 @@
                 <div class="mb-4">
                     <label for="address" class="block text-sm font-medium text-slate-300">Or search for an address</label>
                     <div class="flex"><input type="text" id="address" class="mt-1 block w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 text-white sm:text-sm"><button type="button" id="search-address" class="ml-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Search</button></div>
+                </div>
+                <div class="mb-4">
+                    <label for="challenge-link" class="block text-sm font-medium text-slate-300">Link to Challenge (Optional)</label>
+                    <select id="challenge-link" class="mt-1 block w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-white">
+                        <option value="">None</option>
+                        <!-- Challenges will be populated here -->
+                    </select>
                 </div>
                 <div class="mb-4"><label for="description" class="block text-sm font-medium text-slate-300">Description</label><textarea id="description" rows="3" class="mt-1 block w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 text-white sm:text-sm" required></textarea></div>
                 <div class="mb-4"><label for="color" class="block text-sm font-medium text-slate-300">Marker Color</label><input type="color" id="color" value="#4ade80" class="mt-1 block w-full h-10 border-slate-700 rounded-md bg-slate-800"></div>
@@ -248,14 +279,24 @@
                 <button id="close-profile-modal" class="text-slate-400 hover:text-white transition"><i data-lucide="x"></i></button>
             </div>
             <div class="space-y-4">
-                <div>
-                    <label class="text-sm font-medium text-slate-400">Username</label>
-                    <p id="profile-username" class="text-lg font-semibold text-white"></p>
+                <div class="flex items-center gap-4">
+                     <img id="profile-avatar" src="https://placehold.co/80x80/1e293b/4ade80?text=P" class="w-20 h-20 rounded-full border-4 border-slate-700 object-cover">
+                     <div>
+                        <p id="profile-username" class="text-xl font-semibold text-white"></p>
+                        <p id="profile-balance" class="text-3xl font-bold text-green-400 text-glow"></p>
+                     </div>
                 </div>
-                 <div>
-                    <label class="text-sm font-medium text-slate-400">Balance</label>
-                    <p id="profile-balance" class="text-2xl font-bold text-green-400 text-glow"></p>
+
+                <div id="connect-x-container">
+                    <button id="connect-x-btn" class="w-full py-2.5 px-4 bg-black text-white font-semibold rounded-md hover:bg-gray-800 transition flex items-center justify-center gap-2"><i data-lucide="twitter"></i> Connect with X</button>
                 </div>
+                 <div id="x-info-container" class="hidden">
+                    <label class="text-sm font-medium text-slate-400">X Profile</label>
+                    <a id="profile-x-link" href="#" target="_blank" class="flex items-center gap-2 text-sm text-cyan-400 hover:underline">
+                        <span id="profile-x-username"></span>
+                    </a>
+                </div>
+
                  <div>
                     <label class="text-sm font-medium text-slate-400">Wallet Address</label>
                     <div id="wallet-display-container">
@@ -277,8 +318,15 @@
              <button id="close-media-viewer" class="absolute -top-3 -right-3 text-slate-400 bg-slate-800 rounded-full p-1.5 border border-slate-700 hover:text-white transition z-10"><i data-lucide="x"></i></button>
              <div id="media-viewer-content" class="w-full bg-black rounded-t-lg"></div>
              <div class="p-6">
-                <h3 id="media-viewer-title" class="text-2xl font-bold text-white"></h3>
-                <p id="media-viewer-author" class="text-sm text-slate-400 mb-4"></p>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 id="media-viewer-title" class="text-2xl font-bold text-white"></h3>
+                        <p id="media-viewer-author" class="text-sm text-slate-400 mb-4"></p>
+                    </div>
+                     <a id="author-x-link" href="#" target="_blank" class="hidden items-center gap-2 px-3 py-1.5 bg-black text-white text-sm font-semibold rounded-md hover:bg-gray-800 transition">
+                        <i data-lucide="twitter" class="w-4 h-4"></i>
+                     </a>
+                </div>
                 <a id="media-viewer-source-link" href="#" target="_blank" class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition hidden">
                     <i data-lucide="external-link"></i> View Source
                 </a>
@@ -317,8 +365,8 @@
     <script type="module">
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, setDoc, doc, getDoc, serverTimestamp, orderBy, limit, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, TwitterAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, setDoc, doc, getDoc, serverTimestamp, orderBy, limit, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyBvk61LjapStYDRvUJY2duNbYZxvK6BCOk",
@@ -344,6 +392,16 @@
         const userInfoHeader = document.getElementById('user-info');
         const guestInfoHeader = document.getElementById('guest-info');
         const prizePoolContainer = document.getElementById('prize-pool-container');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+
+        function showToast(message) {
+            toastMessage.textContent = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
 
         // --- AUTH STATE & DATA LISTENERS ---
         onAuthStateChanged(auth, async (user) => {
@@ -373,12 +431,12 @@
                 listenToUserData(user.uid);
                 listenToMyGraffiti();
                 listenToPrizePool();
-                listenToChallenges(); // User sees challenges too
+                listenToChallenges(); 
                 listenToChat(currentChatRoom);
             } else {
                 userId = null;
                 username = null;
-                [userListener, prizePoolListener, chatListener].forEach(l => l && l());
+                [userListener, prizePoolListener, chatListener, challengesListener].forEach(l => l && l());
                 
                 userInfoHeader.classList.add('hidden');
                 userInfoHeader.classList.remove('flex');
@@ -386,7 +444,7 @@
                 prizePoolContainer.classList.add('hidden');
 
                 if (!map) setupMap();
-                listenToChallenges(); // Guests can see challenges
+                listenToChallenges();
             }
             lucide.createIcons();
         });
@@ -414,7 +472,7 @@
 
             try {
                 await signInWithEmailAndPassword(auth, email, password);
-                authContainer.classList.add('hidden'); // Hide on successful login
+                authContainer.classList.add('hidden');
             } catch (loginError) {
                 if (loginError.code === 'auth/invalid-credential' || loginError.code === 'auth/user-not-found') {
                     try {
@@ -422,7 +480,7 @@
                         await setDoc(doc(db, "users", userCredential.user.uid), { 
                             username: usernameInput, walletAddress, balance: 0, banned: false, isAdmin: false
                         });
-                        authContainer.classList.add('hidden'); // Hide on successful registration
+                        authContainer.classList.add('hidden');
                     } catch (registerError) {
                         errorP.textContent = registerError.code === 'auth/weak-password' ? 'Password must be at least 6 characters.' : 'Could not create account.';
                     }
@@ -449,6 +507,24 @@
                     document.getElementById('profile-wallet').textContent = userData.walletAddress;
                     document.getElementById('profile-wallet-input').value = userData.walletAddress;
                     document.getElementById('profile-balance').textContent = `${balance.toFixed(4)} SOL`;
+                    
+                    const userAvatar = document.getElementById('user-avatar');
+                    const profileAvatar = document.getElementById('profile-avatar');
+                    
+                    if (userData.xProfileImageUrl) {
+                        userAvatar.src = userData.xProfileImageUrl;
+                        profileAvatar.src = userData.xProfileImageUrl;
+                        document.getElementById('connect-x-container').classList.add('hidden');
+                        document.getElementById('x-info-container').classList.remove('hidden');
+                        document.getElementById('profile-x-username').textContent = `@${userData.xUsername}`;
+                        document.getElementById('profile-x-link').href = `https://x.com/${userData.xUsername}`;
+                    } else {
+                        userAvatar.src = `https://placehold.co/32x32/1e293b/4ade80?text=${(userData.username || 'P').charAt(0).toUpperCase()}`;
+                        profileAvatar.src = `https://placehold.co/80x80/1e293b/4ade80?text=${(userData.username || 'P').charAt(0).toUpperCase()}`;
+                        document.getElementById('connect-x-container').classList.remove('hidden');
+                        document.getElementById('x-info-container').classList.add('hidden');
+                    }
+
                     if (userData.isAdmin) document.getElementById('admin-challenge-info').classList.remove('hidden');
                 }
             });
@@ -469,8 +545,11 @@
             challengesListener = onSnapshot(query(collection(db, "challenges")), (snapshot) => {
                 const ongoingList = document.getElementById('ongoing-challenges-list');
                 const finishedList = document.getElementById('finished-challenges-list');
+                const challengeDropdown = document.getElementById('challenge-link');
+                
                 ongoingList.innerHTML = '';
                 finishedList.innerHTML = '';
+                challengeDropdown.innerHTML = '<option value="">None</option>';
 
                  if (snapshot.empty) {
                     ongoingList.innerHTML = `<p class="text-slate-400 text-center mt-4">No active challenges right now.</p>`;
@@ -479,6 +558,8 @@
 
                 snapshot.forEach(doc => {
                     const challenge = doc.data();
+                    challenge.id = doc.id; // Store ID for later
+                    
                     let winnersHTML = '';
                     if (challenge.winners && Object.keys(challenge.winners).length > 0) {
                         winnersHTML = '<h4 class="text-sm font-bold text-slate-400 mt-3">Winners:</h4><ul class="list-disc list-inside text-sm text-slate-300">' +
@@ -492,13 +573,20 @@
                         <p class="text-sm text-slate-300 mt-1">${challenge.description}</p>
                         <div class="flex justify-between items-center mt-2">
                            ${challenge.reward ? `<p class="text-xs text-green-400 font-bold">${challenge.reward} SOL Reward</p>` : '<div></div>'}
-                           <p class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="users" class="w-3 h-3"></i>${challenge.participantCount || 0} Participants</p>
+                           <p class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="users" class="w-3 h-3"></i>${challenge.participantCount || 0} ${challenge.maxParticipants ? `/ ${challenge.maxParticipants}` : 'Participants'}</p>
                         </div>
                         ${winnersHTML}
                     `;
                     
-                    if(challenge.status === 'ongoing') ongoingList.appendChild(div);
-                    else finishedList.appendChild(div);
+                    if(challenge.status === 'ongoing') {
+                        ongoingList.appendChild(div);
+                        const option = document.createElement('option');
+                        option.value = challenge.id;
+                        option.textContent = challenge.title;
+                        challengeDropdown.appendChild(option);
+                    } else {
+                        finishedList.appendChild(div);
+                    }
                 });
                 lucide.createIcons();
             });
@@ -594,7 +682,7 @@
                 }
             });
 
-            map.on('singleclick', (evt) => {
+            map.on('singleclick', async (evt) => {
                 if (isPlacingGraffiti) {
                     const coords = ol.proj.toLonLat(evt.coordinate);
                     document.getElementById('latitude').value = coords[1];
@@ -607,13 +695,27 @@
                     const feature = map.forEachFeatureAtPixel(evt.pixel, (f) => f);
                     if (feature) {
                         overlay.setPosition(undefined); hoveredFeature = null;
-                        const { description, authorUsername, videoUrl, imageUrl } = feature.getProperties();
+                        const { description, author, authorUsername, videoUrl, imageUrl } = feature.getProperties();
+                        
                         document.getElementById('media-viewer-title').textContent = description;
                         document.getElementById('media-viewer-author').textContent = authorUsername ? `By: ${authorUsername}` : '';
                         const mediaContentEl = document.getElementById('media-viewer-content');
                         const sourceLinkEl = document.getElementById('media-viewer-source-link');
-                        mediaContentEl.innerHTML = ''; sourceLinkEl.classList.add('hidden');
+                        const authorXLink = document.getElementById('author-x-link');
                         
+                        mediaContentEl.innerHTML = ''; 
+                        sourceLinkEl.classList.add('hidden');
+                        authorXLink.classList.add('hidden');
+                        
+                        // Fetch author's X info
+                        if (author) {
+                            const authorDoc = await getDoc(doc(db, 'users', author));
+                            if(authorDoc.exists() && authorDoc.data().xUsername) {
+                                authorXLink.href = `https://x.com/${authorDoc.data().xUsername}`;
+                                authorXLink.classList.remove('hidden');
+                            }
+                        }
+
                         let sourceUrl = videoUrl || imageUrl;
                         mediaContentEl.innerHTML = videoUrl ? generateEmbedHTML(videoUrl, false) : (imageUrl ? `<img src="${imageUrl}" alt="Graffiti Image">` : '');
                         
@@ -677,6 +779,8 @@
             const submitBtn = document.getElementById('submit-graffiti');
             submitBtn.disabled = true; submitBtn.textContent = 'Saving...';
             
+            const linkedChallengeId = document.getElementById('challenge-link').value;
+
             await addDoc(collection(db, `graffiti`), {
                 coordinates: [parseFloat(document.getElementById('longitude').value), parseFloat(document.getElementById('latitude').value)],
                 description: document.getElementById('description').value,
@@ -684,8 +788,16 @@
                 imageUrl: document.getElementById('image-url').value || null,
                 videoUrl: document.getElementById('video-url').value || null,
                 author: userId, authorUsername: username, createdAt: serverTimestamp(),
-                verifiedWinner: false
+                verifiedWinner: false,
+                linkedChallengeId: linkedChallengeId || null
             });
+            
+            if (linkedChallengeId) {
+                const challengeRef = doc(db, "challenges", linkedChallengeId);
+                await updateDoc(challengeRef, {
+                    participantCount: increment(1)
+                });
+            }
             
             document.getElementById('graffiti-modal').classList.add('hidden');
             graffitiForm.reset();
@@ -703,7 +815,7 @@
             } else { alert('Address not found.'); }
         });
         
-        // Profile Wallet Edit
+        // Profile Wallet & X Connect Logic
         const walletDisplay = document.getElementById('wallet-display-container');
         const walletEdit = document.getElementById('wallet-edit-container');
         document.getElementById('edit-wallet-btn').addEventListener('click', () => { walletDisplay.classList.add('hidden'); walletEdit.classList.remove('hidden'); });
@@ -717,20 +829,39 @@
                 alert('Please enter a valid Solana wallet address.');
             }
         });
+        
+        document.getElementById('connect-x-btn').addEventListener('click', async () => {
+            const provider = new TwitterAuthProvider();
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const credential = TwitterAuthProvider.credentialFromResult(result);
+                // This gives you a the Twitter OAuth 1.0 Access Token and Secret.
+                // You can use these server side to make requests to the Twitter API.
+                const token = credential.accessToken;
+                const secret = credential.secret;
+                const user = result.user;
+                
+                const xUsername = user.reloadUserInfo.screenName;
+                const xProfileImageUrl = user.photoURL.replace('_normal', '_400x400'); // Get larger image
+
+                await updateDoc(doc(db, "users", userId), { xUsername, xProfileImageUrl });
+                showToast('X account connected!');
+
+            } catch (error) {
+                console.error("X connection error:", error);
+                showToast('Failed to connect X account.');
+            }
+        });
+
 
         function listenToMyGraffiti() {
             if (!userId) return;
             const graffitiList = document.getElementById('my-graffiti-list');
-            if(userListener) userListener(); // This should be a different listener variable, but for now it's ok.
             const q = query(collection(db, "graffiti"), where("author", "==", userId));
             onSnapshot(q, (snapshot) => {
                 graffitiList.innerHTML = snapshot.empty ? `<p class="text-slate-400 text-center mt-4">You haven't created any graffiti yet.</p>` : '';
                 
-                const docs = snapshot.docs.sort((a,b) => {
-                    const timeA = a.data().createdAt?.toMillis() || 0;
-                    const timeB = b.data().createdAt?.toMillis() || 0;
-                    return timeB - timeA;
-                });
+                const docs = snapshot.docs.sort((a,b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
 
                 docs.forEach(docSnap => {
                     const graffiti = docSnap.data();
@@ -807,6 +938,18 @@
                 });
             }
         });
+        
+        // Donation Logic
+        document.getElementById('copy-donation-wallet').addEventListener('click', () => {
+            const wallet = 'DpkJp4NrauKiyhLu3MCNZCp7komfKgCaS7P1u5pnRBYK';
+            navigator.clipboard.writeText(wallet).then(() => {
+                showToast('Donation wallet copied!');
+            }).catch(err => {
+                console.error('Failed to copy wallet address:', err);
+                showToast('Failed to copy.');
+            });
+        });
+
     </script>
 </body>
 </html>

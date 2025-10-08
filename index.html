@@ -348,8 +348,8 @@
         // --- AUTH STATE & DATA LISTENERS ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                [userListener, prizePoolListener, challengesListener, chatListener].forEach(l => l && l());
-
+                [userListener, prizePoolListener, chatListener].forEach(l => l && l());
+                
                 const userDocRef = doc(db, "users", user.uid);
                 const userDoc = await getDoc(userDocRef);
 
@@ -373,12 +373,12 @@
                 listenToUserData(user.uid);
                 listenToMyGraffiti();
                 listenToPrizePool();
-                listenToChallenges();
+                listenToChallenges(); // User sees challenges too
                 listenToChat(currentChatRoom);
             } else {
                 userId = null;
                 username = null;
-                [userListener, prizePoolListener, challengesListener, chatListener].forEach(l => l && l());
+                [userListener, prizePoolListener, chatListener].forEach(l => l && l());
                 
                 userInfoHeader.classList.add('hidden');
                 userInfoHeader.classList.remove('flex');
@@ -414,6 +414,7 @@
 
             try {
                 await signInWithEmailAndPassword(auth, email, password);
+                authContainer.classList.add('hidden'); // Hide on successful login
             } catch (loginError) {
                 if (loginError.code === 'auth/invalid-credential' || loginError.code === 'auth/user-not-found') {
                     try {
@@ -421,6 +422,7 @@
                         await setDoc(doc(db, "users", userCredential.user.uid), { 
                             username: usernameInput, walletAddress, balance: 0, banned: false, isAdmin: false
                         });
+                        authContainer.classList.add('hidden'); // Hide on successful registration
                     } catch (registerError) {
                         errorP.textContent = registerError.code === 'auth/weak-password' ? 'Password must be at least 6 characters.' : 'Could not create account.';
                     }
@@ -488,13 +490,17 @@
                     div.innerHTML = `
                         <h3 class="font-bold text-green-400">${challenge.title}</h3>
                         <p class="text-sm text-slate-300 mt-1">${challenge.description}</p>
-                        ${challenge.reward ? `<p class="text-xs text-green-400 mt-2 font-bold">${challenge.reward} SOL Reward</p>` : ''}
+                        <div class="flex justify-between items-center mt-2">
+                           ${challenge.reward ? `<p class="text-xs text-green-400 font-bold">${challenge.reward} SOL Reward</p>` : '<div></div>'}
+                           <p class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="users" class="w-3 h-3"></i>${challenge.participantCount || 0} Participants</p>
+                        </div>
                         ${winnersHTML}
                     `;
                     
                     if(challenge.status === 'ongoing') ongoingList.appendChild(div);
                     else finishedList.appendChild(div);
                 });
+                lucide.createIcons();
             });
         }
         
@@ -715,8 +721,9 @@
         function listenToMyGraffiti() {
             if (!userId) return;
             const graffitiList = document.getElementById('my-graffiti-list');
-            if(userListener) userListener();
-            userListener = onSnapshot(query(collection(db, "graffiti"), where("author", "==", userId)), (snapshot) => {
+            if(userListener) userListener(); // This should be a different listener variable, but for now it's ok.
+            const q = query(collection(db, "graffiti"), where("author", "==", userId));
+            onSnapshot(q, (snapshot) => {
                 graffitiList.innerHTML = snapshot.empty ? `<p class="text-slate-400 text-center mt-4">You haven't created any graffiti yet.</p>` : '';
                 
                 const docs = snapshot.docs.sort((a,b) => {

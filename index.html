@@ -560,8 +560,9 @@
                         `<button data-challenge-id="${challenge.id}" class="participate-btn mt-3 w-full py-2 text-sm bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition">Participate</button>`;
                     
                     let infoLinksHTML = '';
-                    if (challenge.infoLinks && Array.isArray(challenge.infoLinks)) {
-                        infoLinksHTML = challenge.infoLinks.map((link, index) => 
+                    const links = challenge.infoLinks || challenge.infolinks;
+                    if (links && Array.isArray(links)) {
+                        infoLinksHTML = links.map((link, index) => 
                             `<a href="${link}" target="_blank" class="text-xs text-cyan-400 hover:underline">More Info ${index + 1}</a>`
                         ).join(' | ');
                     }
@@ -752,24 +753,25 @@
             source.clear();
 
             publicGraffitiListener = onSnapshot(query(collection(db, "graffiti"), where("approved", "==", true)), (snapshot) => {
-                snapshot.docChanges().forEach(updateMapFeatures);
+                snapshot.docChanges().forEach(change => updateMapFeatures(change, source));
             });
 
             if (currentUserId) {
                 userGraffitiListener = onSnapshot(query(collection(db, "graffiti"), where("author", "==", currentUserId), where("approved", "==", false)), (snapshot) => {
-                    snapshot.docChanges().forEach(updateMapFeatures);
+                    snapshot.docChanges().forEach(change => updateMapFeatures(change, source));
                 });
             }
         }
         
-        function updateMapFeatures(change) {
-            const source = map.getLayers().getArray()[1].getSource();
+        function updateMapFeatures(change, source) {
             const data = change.doc.data();
             const featureId = change.doc.id;
             const existingFeature = source.getFeatureById(featureId);
 
-            if (change.type === "removed" && existingFeature) {
-                source.removeFeature(existingFeature);
+            if (change.type === "removed") {
+                if (existingFeature) {
+                    source.removeFeature(existingFeature);
+                }
                 return;
             }
 
@@ -786,10 +788,13 @@
         const graffitiForm = document.getElementById('graffiti-form');
         const modals = ['graffiti-modal', 'my-graffiti-modal', 'challenges-modal', 'profile-modal', 'chat-modal', 'pre-graffiti-modal', 'media-viewer-modal'];
         modals.forEach(id => {
-            document.getElementById(`close-${id.replace('-modal', '')}-modal`)?.addEventListener('click', () => {
-                document.getElementById(id).classList.add('hidden');
-                if(id === 'media-viewer-modal') document.getElementById('media-viewer-content').innerHTML = '';
-            });
+            const closeBtn = document.getElementById(`close-${id.replace('-modal', '')}-modal`);
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    document.getElementById(id).classList.add('hidden');
+                    if(id === 'media-viewer-modal') document.getElementById('media-viewer-content').innerHTML = '';
+                });
+            }
         });
         
         document.getElementById('cancel-graffiti').addEventListener('click', () => {

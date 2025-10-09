@@ -307,7 +307,7 @@
     <!-- Media Viewer Modal -->
     <div id="media-viewer-modal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-lg flex items-center justify-center p-4 z-[60] hidden">
         <div class="bg-slate-800/80 rounded-lg shadow-xl w-full max-w-2xl modal-fade-in border border-slate-700 flex flex-col relative">
-             <button id="close-media-viewer" class="absolute -top-3 -right-3 text-slate-400 bg-slate-800 rounded-full p-1.5 border border-slate-700 hover:text-white transition z-10"><i data-lucide="x"></i></button>
+             <button id="close-media-viewer-modal" class="absolute -top-3 -right-3 text-slate-400 bg-slate-800 rounded-full p-1.5 border border-slate-700 hover:text-white transition z-10"><i data-lucide="x"></i></button>
              <div id="media-viewer-content" class="w-full bg-black rounded-t-lg"></div>
              <div class="p-6">
                 <div class="flex justify-between items-start">
@@ -379,7 +379,7 @@
         let userId, username, currentUserWallet;
         let map; 
         let isPlacingGraffiti = false;
-        let userListener, prizePoolListener, challengesListener, chatListener, myGraffitiListener = null;
+        let userListener, challengesListener, chatListener, myGraffitiListener, publicGraffitiListener, userGraffitiListener = null;
         let currentChatRoom = 'english';
         let preselectedChallengeId = null;
         
@@ -399,7 +399,7 @@
 
         // --- AUTH STATE & DATA LISTENERS ---
         onAuthStateChanged(auth, async (user) => {
-            [userListener, prizePoolListener, chatListener, challengesListener, myGraffitiListener].forEach(l => l && l());
+            [userListener, challengesListener, chatListener, myGraffitiListener, publicGraffitiListener, userGraffitiListener].forEach(l => l && l());
 
             if (user) {
                 const userDocRef = doc(db, "users", user.uid);
@@ -420,7 +420,8 @@
                 guestInfoHeader.classList.add('hidden');
                 
                 if (!map) setupMap();
-                
+                else { listenToGraffitiData(map.getLayers().getArray()[1].getSource(), userId); }
+
                 listenToUserData(user.uid);
                 listenToMyGraffiti();
                 listenToChallenges(); 
@@ -435,6 +436,7 @@
                 guestInfoHeader.classList.remove('hidden');
                 
                 if (!map) setupMap();
+                else { listenToGraffitiData(map.getLayers().getArray()[1].getSource(), null); }
                 listenToChallenges(); 
             }
             lucide.createIcons();
@@ -556,7 +558,7 @@
                     const buttonHTML = isFull ? 
                         `<button class="mt-3 w-full py-2 text-sm bg-slate-600 text-slate-400 rounded-md cursor-not-allowed" disabled>Full</button>` :
                         `<button data-challenge-id="${challenge.id}" class="participate-btn mt-3 w-full py-2 text-sm bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition">Participate</button>`;
-
+                    
                     let infoLinksHTML = '';
                     if (challenge.infoLinks && Array.isArray(challenge.infoLinks)) {
                         infoLinksHTML = challenge.infoLinks.map((link, index) => 
@@ -625,11 +627,12 @@
             const graffitiLayer = new ol.layer.Vector({
                 source: new ol.source.Vector(),
                 style: function(feature) {
+                    const isApproved = feature.get('approved');
                     const baseStyle = new ol.style.Style({
                         image: new ol.style.Circle({
                             radius: 8,
-                            fill: new ol.style.Fill({ color: feature.get('color') || '#4ade80' }),
-                            stroke: new ol.style.Stroke({ color: 'rgba(255,255,255,0.8)', width: 2.5 })
+                            fill: new ol.style.Fill({ color: isApproved ? (feature.get('color') || '#4ade80') : 'rgba(100, 116, 139, 0.5)' }),
+                            stroke: new ol.style.Stroke({ color: isApproved ? 'rgba(255,255,255,0.8)' : 'rgba(156, 163, 175, 0.8)', width: 2 })
                         })
                     });
 
@@ -654,15 +657,9 @@
                 view: new ol.View({ center: ol.proj.fromLonLat([-74.006, 40.7128]), zoom: 3 }),
                 overlays: [overlay], controls: []
             });
-
-            onSnapshot(query(collection(db, `graffiti`), where("approved", "==", true)), (snapshot) => {
-                graffitiLayer.getSource().clear();
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    graffitiLayer.getSource().addFeature(new ol.Feature({ geometry: new ol.geom.Point(ol.proj.fromLonLat(data.coordinates)), ...data }));
-                });
-            });
             
+            listenToGraffitiData(graffitiLayer.getSource(), userId);
+
             let hoveredFeature = null;
             map.on('pointermove', (e) => {
                 if (isPlacingGraffiti) { map.getTargetElement().style.cursor = 'crosshair'; return; }
@@ -670,7 +667,7 @@
                 map.getTargetElement().style.cursor = feature ? 'pointer' : '';
                 if (feature !== hoveredFeature) {
                     overlay.setPosition(undefined);
-                    if (feature) {
+                    if (feature && feature.get('approved')) {
                         const { description, videoUrl, imageUrl } = feature.getProperties();
                         let content = `<h4 class="font-bold text-base text-white truncate">${description}</h4>`;
                         if (videoUrl && (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be'))) {
@@ -702,6 +699,11 @@
                 } else {
                     const feature = map.forEachFeatureAtPixel(evt.pixel, (f) => f);
                     if (feature) {
+                        if (!feature.get('approved')) {
+                            showToast('This graffiti is pending approval.');
+                            return;
+                        }
+
                         overlay.setPosition(undefined); hoveredFeature = null;
                         const { description, author, authorUsername, videoUrl, imageUrl, challengeReward } = feature.getProperties();
                         
@@ -744,20 +746,52 @@
             });
         }
         
+        function listenToGraffitiData(source, currentUserId) {
+            if(publicGraffitiListener) publicGraffitiListener();
+            if(userGraffitiListener) userGraffitiListener();
+            source.clear();
+
+            publicGraffitiListener = onSnapshot(query(collection(db, "graffiti"), where("approved", "==", true)), (snapshot) => {
+                snapshot.docChanges().forEach(updateMapFeatures);
+            });
+
+            if (currentUserId) {
+                userGraffitiListener = onSnapshot(query(collection(db, "graffiti"), where("author", "==", currentUserId), where("approved", "==", false)), (snapshot) => {
+                    snapshot.docChanges().forEach(updateMapFeatures);
+                });
+            }
+        }
+        
+        function updateMapFeatures(change) {
+            const source = map.getLayers().getArray()[1].getSource();
+            const data = change.doc.data();
+            const featureId = change.doc.id;
+            const existingFeature = source.getFeatureById(featureId);
+
+            if (change.type === "removed" && existingFeature) {
+                source.removeFeature(existingFeature);
+                return;
+            }
+
+            if (existingFeature) {
+               source.removeFeature(existingFeature);
+            }
+            
+            const newFeature = new ol.Feature({ geometry: new ol.geom.Point(ol.proj.fromLonLat(data.coordinates)), ...data });
+            newFeature.setId(featureId);
+            source.addFeature(newFeature);
+        }
+
         // --- MODAL & FORM LOGIC ---
         const graffitiForm = document.getElementById('graffiti-form');
-        const modals = ['graffiti-modal', 'my-graffiti-modal', 'challenges-modal', 'profile-modal', 'chat-modal', 'pre-graffiti-modal'];
+        const modals = ['graffiti-modal', 'my-graffiti-modal', 'challenges-modal', 'profile-modal', 'chat-modal', 'pre-graffiti-modal', 'media-viewer-modal'];
         modals.forEach(id => {
             document.getElementById(`close-${id.replace('-modal', '')}-modal`)?.addEventListener('click', () => {
                 document.getElementById(id).classList.add('hidden');
+                if(id === 'media-viewer-modal') document.getElementById('media-viewer-content').innerHTML = '';
             });
         });
         
-        document.getElementById('close-media-viewer').addEventListener('click', () => {
-             document.getElementById('media-viewer-modal').classList.add('hidden');
-             document.getElementById('media-viewer-content').innerHTML = ''; // Stop video
-        });
-
         document.getElementById('cancel-graffiti').addEventListener('click', () => {
             document.getElementById('graffiti-modal').classList.add('hidden');
             graffitiForm.reset();

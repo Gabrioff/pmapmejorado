@@ -132,7 +132,7 @@
                  <h1 class="hidden sm:block text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-500 text-glow">Eric Projects</h1>
                  <div class="flex-1 flex items-center justify-center sm:justify-start gap-2 md:gap-4 sm:ml-6">
                     <a href="https://youtube.com/@ericemprende-finanzas?si=hL_aJy3R916mPFZD" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="youtube"></i><span class="hidden md:inline">YouTube</span></a>
-                    <a href="https://x.com/ericemprende" title="Coming Soon" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2 cursor-not-allowed opacity-50"><i data-lucide="twitter"></i><span class="hidden md:inline">X (Soon)</span></a>
+                    <a href="https://x.com/ericemprende" class="px-3 py-2 text-sm font-semibold bg-white/10 text-white rounded-lg backdrop-blur-sm hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="twitter"></i><span class="hidden md:inline">X</span></a>
                 </div>
                 
                  <!-- Logged In User Info -->
@@ -196,6 +196,10 @@
             <h2 class="text-2xl font-bold mb-4 text-white">Add Graffiti</h2>
             <form id="graffiti-form">
                 <input type="hidden" id="latitude" name="latitude"><input type="hidden" id="longitude" name="longitude">
+                <div class="mb-4">
+                    <label for="graffiti-wallet" class="block text-sm font-medium text-slate-300">Payment Wallet for this Post</label>
+                    <input type="text" id="graffiti-wallet" required class="mt-1 block w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-white font-mono text-sm">
+                </div>
                 <div class="mb-4">
                     <label for="address" class="block text-sm font-medium text-slate-300">Or search for an address</label>
                     <div class="flex"><input type="text" id="address" class="mt-1 block w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 text-white sm:text-sm"><button type="button" id="search-address" class="ml-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Search</button></div>
@@ -276,7 +280,7 @@
                 </div>
 
                 <div id="connect-x-container">
-                    <button id="connect-x-btn" class="w-full py-2.5 px-4 bg-black text-white font-semibold rounded-md hover:bg-gray-800 transition flex items-center justify-center gap-2 cursor-not-allowed opacity-50" title="Coming Soon" disabled><i data-lucide="twitter"></i> Connect with X (Soon)</button>
+                    <button id="connect-x-btn" class="w-full py-2.5 px-4 bg-black text-white font-semibold rounded-md hover:bg-gray-800 transition flex items-center justify-center gap-2"><i data-lucide="twitter"></i> Connect with X</button>
                 </div>
                  <div id="x-info-container" class="hidden">
                     <label class="text-sm font-medium text-slate-400">X Profile</label>
@@ -311,9 +315,12 @@
                         <h3 id="media-viewer-title" class="text-2xl font-bold text-white"></h3>
                         <p id="media-viewer-author" class="text-sm text-slate-400 mb-4"></p>
                     </div>
-                     <a id="author-x-link" href="#" target="_blank" class="hidden items-center gap-2 px-3 py-1.5 bg-black text-white text-sm font-semibold rounded-md hover:bg-gray-800 transition">
-                        <i data-lucide="twitter" class="w-4 h-4"></i>
-                     </a>
+                    <div class="flex items-center gap-4">
+                         <div id="media-viewer-reward" class="text-lg font-bold text-green-400 text-glow hidden"></div>
+                         <a id="author-x-link" href="#" target="_blank" class="hidden items-center gap-2 px-3 py-1.5 bg-black text-white text-sm font-semibold rounded-md hover:bg-gray-800 transition">
+                            <i data-lucide="twitter" class="w-4 h-4"></i>
+                         </a>
+                    </div>
                 </div>
                 <a id="media-viewer-source-link" href="#" target="_blank" class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition hidden">
                     <i data-lucide="external-link"></i> View Source
@@ -353,7 +360,7 @@
     <script type="module">
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, TwitterAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, TwitterAuthProvider, linkWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, where, setDoc, doc, getDoc, serverTimestamp, orderBy, limit, updateDoc, increment, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         const firebaseConfig = {
@@ -369,7 +376,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        let userId, username;
+        let userId, username, currentUserWallet;
         let map; 
         let isPlacingGraffiti = false;
         let userListener, prizePoolListener, challengesListener, chatListener, myGraffitiListener = null;
@@ -421,6 +428,7 @@
             } else {
                 userId = null;
                 username = null;
+                currentUserWallet = null;
                 
                 userInfoHeader.classList.add('hidden');
                 userInfoHeader.classList.remove('flex');
@@ -484,6 +492,7 @@
             userListener = onSnapshot(userDocRef, (doc) => {
                 if (doc.exists()) {
                     const userData = doc.data();
+                    currentUserWallet = userData.walletAddress;
                     document.getElementById('profile-username').textContent = userData.username;
                     document.getElementById('profile-wallet').textContent = userData.walletAddress;
                     document.getElementById('profile-wallet-input').value = userData.walletAddress;
@@ -548,11 +557,19 @@
                         `<button class="mt-3 w-full py-2 text-sm bg-slate-600 text-slate-400 rounded-md cursor-not-allowed" disabled>Full</button>` :
                         `<button data-challenge-id="${challenge.id}" class="participate-btn mt-3 w-full py-2 text-sm bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition">Participate</button>`;
 
+                    let infoLinksHTML = '';
+                    if (challenge.infoLinks && Array.isArray(challenge.infoLinks)) {
+                        infoLinksHTML = challenge.infoLinks.map((link, index) => 
+                            `<a href="${link}" target="_blank" class="text-xs text-cyan-400 hover:underline">More Info ${index + 1}</a>`
+                        ).join(' | ');
+                    }
+
                     const div = document.createElement('div');
                     div.className = 'p-4 bg-slate-800 rounded-lg';
                     div.innerHTML = `
                         <h3 class="font-bold text-green-400">${challenge.title}</h3>
                         <p class="text-sm text-slate-300 mt-1">${challenge.description}</p>
+                        <div class="mt-1">${infoLinksHTML}</div>
                         <div class="flex justify-between items-center mt-2">
                            ${challenge.reward ? `<p class="text-xs text-green-400 font-bold">${challenge.reward} SOL Reward</p>` : '<div></div>'}
                            <p class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="users" class="w-3 h-3"></i>${challenge.participantCount || 0} ${challenge.maxParticipants ? `/ ${challenge.maxParticipants}` : 'Participants'}</p>
@@ -673,6 +690,11 @@
                     const coords = ol.proj.toLonLat(evt.coordinate);
                     document.getElementById('latitude').value = coords[1];
                     document.getElementById('longitude').value = coords[0];
+                    if(preselectedChallengeId) {
+                        document.getElementById('challenge-link').value = preselectedChallengeId;
+                        preselectedChallengeId = null; 
+                    }
+                    document.getElementById('graffiti-wallet').value = currentUserWallet;
                     document.getElementById('graffiti-modal').classList.remove('hidden');
                     document.getElementById('pre-graffiti-modal').classList.add('hidden');
                     isPlacingGraffiti = false;
@@ -681,17 +703,24 @@
                     const feature = map.forEachFeatureAtPixel(evt.pixel, (f) => f);
                     if (feature) {
                         overlay.setPosition(undefined); hoveredFeature = null;
-                        const { description, author, authorUsername, videoUrl, imageUrl } = feature.getProperties();
+                        const { description, author, authorUsername, videoUrl, imageUrl, challengeReward } = feature.getProperties();
                         
                         document.getElementById('media-viewer-title').textContent = description;
                         document.getElementById('media-viewer-author').textContent = authorUsername ? `By: ${authorUsername}` : '';
                         const mediaContentEl = document.getElementById('media-viewer-content');
                         const sourceLinkEl = document.getElementById('media-viewer-source-link');
                         const authorXLink = document.getElementById('author-x-link');
+                        const rewardEl = document.getElementById('media-viewer-reward');
                         
                         mediaContentEl.innerHTML = ''; 
                         sourceLinkEl.classList.add('hidden');
                         authorXLink.classList.add('hidden');
+                        rewardEl.classList.add('hidden');
+
+                        if (challengeReward) {
+                            rewardEl.textContent = `${challengeReward} SOL`;
+                            rewardEl.classList.remove('hidden');
+                        }
                         
                         if (author) {
                             const authorDoc = await getDoc(doc(db, 'users', author));
@@ -751,6 +780,11 @@
         });
         document.getElementById('pre-graffiti-search').addEventListener('click', () => {
             document.getElementById('pre-graffiti-modal').classList.add('hidden');
+            if(preselectedChallengeId) {
+                document.getElementById('challenge-link').value = preselectedChallengeId;
+                preselectedChallengeId = null; // Reset after use
+            }
+             document.getElementById('graffiti-wallet').value = currentUserWallet;
             document.getElementById('graffiti-modal').classList.remove('hidden');
         });
         
@@ -779,8 +813,16 @@
             submitBtn.disabled = true; submitBtn.textContent = 'Saving...';
             
             const linkedChallengeId = document.getElementById('challenge-link').value;
+            const paymentWallet = document.getElementById('graffiti-wallet').value;
+
+            if (!paymentWallet || paymentWallet.length < 32 || paymentWallet.length > 44) {
+                 alert('Please enter a valid Solana wallet for this post.');
+                 submitBtn.disabled = false; submitBtn.textContent = 'Save';
+                 return;
+            }
 
             try {
+                let challengeReward = null;
                 const newGraffitiData = {
                     coordinates: [parseFloat(document.getElementById('longitude').value), parseFloat(document.getElementById('latitude').value)],
                     description: document.getElementById('description').value,
@@ -790,7 +832,8 @@
                     author: userId, authorUsername: username, createdAt: serverTimestamp(),
                     verifiedWinner: false,
                     approved: false, 
-                    linkedChallengeId: linkedChallengeId || null
+                    linkedChallengeId: linkedChallengeId || null,
+                    paymentWallet: paymentWallet
                 };
                 
                 if (linkedChallengeId) {
@@ -799,6 +842,9 @@
                         const challengeDoc = await transaction.get(challengeRef);
                         if (!challengeDoc.exists()) throw "Challenge does not exist!";
                         
+                        challengeReward = challengeDoc.data().reward || null;
+                        newGraffitiData.challengeReward = challengeReward;
+
                         const newParticipants = { ...challengeDoc.data().participants, [userId]: username };
                         transaction.update(challengeRef, { 
                             participantCount: increment(1),
@@ -851,6 +897,31 @@
             }
         });
         
+        document.getElementById('connect-x-btn').addEventListener('click', async () => {
+            if (!auth.currentUser) return;
+            const provider = new TwitterAuthProvider();
+            try {
+                const result = await linkWithPopup(auth.currentUser, provider);
+                const credential = TwitterAuthProvider.credentialFromResult(result);
+                const user = result.user;
+                
+                const xUsername = credential.screenName;
+                const xProfileImageUrl = user.photoURL.replace('_normal', '_400x400');
+
+                await updateDoc(doc(db, "users", userId), { xUsername, xProfileImageUrl });
+                showToast('X account connected!');
+
+            } catch (error) {
+                console.error("X connection error:", error);
+                if (error.code === 'auth/credential-already-in-use') {
+                    alert('This X account is already linked to another user.');
+                } else {
+                    showToast('Failed to connect X account.');
+                }
+            }
+        });
+
+
         function listenToMyGraffiti() {
             if (!userId) return;
             if (myGraffitiListener) myGraffitiListener();
